@@ -1,6 +1,14 @@
+import sqlite3
+import os
 
+DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
 
+def db_connect():
+    db_karma = sqlite3.connect(DB_PATH + 'karmadb')
+    return db_karma
 
+def db_close():
+    db_karma.close()
 
 def karma_ask(name):
     karma = 10
@@ -16,3 +24,5 @@ def karma_sub(name):
 
 def user_add(name):
     return name
+
+# db_karma.close()
