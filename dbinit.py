@@ -12,7 +12,7 @@ def create_users_table():
     db_karma = sqlite3.connect(DB_PATH + 'karmadb')
     cursor = db_karma.cursor()
     cursor.execute('''
-        CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT, karma INTEGER)
+        CREATE TABLE people(name TEXT PRIMARY KEY, karma INTEGER)
     ''')
     db_karma.commit()
     db_karma.close()

@@ -17,5 +17,4 @@ print('You\'ve chosen ' + name)
 
 
 karma = KarmaBoi.karma_ask(name)
-karma = KarmaBoi.karma_sub(name)
 print(name + ' has ' + str(karma) + ' points of karma' )
