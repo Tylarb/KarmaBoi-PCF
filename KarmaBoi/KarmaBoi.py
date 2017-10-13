@@ -21,7 +21,7 @@ def karma_ask(name):
         return karma
 
 
-def karma_add(name, ):
+def karma_add(name):
     karma = karma_ask(name)
     db = db_karma_connect()
     cursor = db.cursor()
