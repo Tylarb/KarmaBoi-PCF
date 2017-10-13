@@ -13,8 +13,17 @@ if not os.path.exists(dbinit.DB_PATH + 'karmadb'):
 
 name = input('please provide a name:\n')
 print('You\'ve chosen ' + name)
+karmaInput = input('please add or subtract karma\n')
 
 
+if karmaInput == '++':
+    karma = KarmaBoi.karma_add(name)
+elif karmaInput == '--':
+    karma = KarmaBoi.karma_sub(name)
+else:
+    karma = KarmaBoi.karma_ask(name)
 
-karma = KarmaBoi.karma_ask(name)
-print(name + ' has ' + str(karma) + ' points of karma' )
+if karma is None:
+    print(name + ' has no karma')
+else:
+    print(name + ' now has ' + str(karma) + ' points of karma' )

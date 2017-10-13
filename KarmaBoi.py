@@ -4,31 +4,62 @@ import os
 DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
 
 def db_karma_connect():
-    db_karma = sqlite3.connect(DB_PATH + 'karmadb')
-    return db_karma
+    db = sqlite3.connect(DB_PATH + 'karmadb')
+    return db
 
-def db_close(db):
-    db.close()
 
 def karma_ask(name):
-    db_karma = db_karma_connect()
-    cursor = db_karma.cursor()
-    cursor.execute(''' SELECT name, karma FROM people WHERE name=? ''',(name,))
+    db = db_karma_connect()
+    cursor = db.cursor()
+    cursor.execute(''' SELECT karma FROM people WHERE name=? ''',(name,))
     karma = cursor.fetchone()
+    db.close()
     if karma is None:
-        return 0
+        return karma
     else:
+        karma = karma[0]
         return karma
 
-def karma_add(name):
-    karma = karma_ask(name) + 1
-    return karma
+
+def karma_add(name, ):
+    karma = karma_ask(name)
+    db = db_karma_connect()
+    cursor = db.cursor()
+    if karma is None:
+        cursor.execute(''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,1))
+        db.commit()
+        db.close()
+        return 1
+    else:
+        karma = karma + 1
+        cursor.execute(''' UPDATE people SET karma = ? WHERE name = ? ''', (karma,name))
+        db.commit()
+        db.close()
+        return karma
 
 def karma_sub(name):
-    karma = karma_ask(name) - 1
-    return karma
+    karma = karma_ask(name)
+    db = db_karma_connect()
+    cursor = db.cursor()
+    if karma is None:
+        cursor.execute(''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,-1))
+        db.commit()
+        db.close()
+        return -1
+    else:
+        karma = karma - 1
+        cursor.execute(''' UPDATE people SET karma = ? WHERE name = ? ''', (karma,name))
+        db.commit()
+        db.close()
+        return karma
 
+
+
+# add quotes
 def user_add(name):
+    db = db_karma_connect()
+    cursor = db.cursor()
+    cursor.execute(''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,0))
     return name
 
-# db_karma.close()
+# add "is also"
