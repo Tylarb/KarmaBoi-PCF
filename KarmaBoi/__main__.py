@@ -4,7 +4,7 @@ import KarmaBoi
 import os
 import dbinit
 import time
-import parse
+import slack_parse
 from slackclient import SlackClient
 
 
@@ -39,9 +39,7 @@ def main():
     if slack_client.rtm_connect():
         print("StarterBot connected and running!")
         while True:
-            command, channel = parse.parse_slack_output(slack_client.rtm_read(),BOT_ID)
-            if command and channel:
-                parse.handle_command(command, channel)
+            slack_parse.triage(slack_client,BOT_ID)
             time.sleep(READ_WEBSOCKET_DELAY)
     else:
         print("Connection failed. Invalid Slack token or bot ID?")
