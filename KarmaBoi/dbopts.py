@@ -2,14 +2,28 @@ import sqlite3
 import os
 
 DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
+DB_NAME = 'karmadb'
 
-def db_karma_connect():
-    db = sqlite3.connect(DB_PATH + 'karmadb')
+
+def create_users_table():
+    if not os.path.exists(DB_PATH):
+        os.makedirs(DB_PATH)
+    db = sqlite3.connect(DB_PATH + DB_NAME)
+    cursor = db.cursor()
+    cursor.execute('''
+        CREATE TABLE people(name TEXT PRIMARY KEY, karma INTEGER)
+    ''')
+    db.commit()
+    db.close()
+
+
+def db_connect():
+    db = sqlite3.connect(DB_PATH + DB_NAME)
     return db
 
 
 def karma_ask(name):
-    db = db_karma_connect()
+    db = db_connect()
     cursor = db.cursor()
     cursor.execute(''' SELECT karma FROM people WHERE name=? ''',(name,))
     karma = cursor.fetchone()
@@ -23,7 +37,7 @@ def karma_ask(name):
 
 def karma_add(name):
     karma = karma_ask(name)
-    db = db_karma_connect()
+    db = db_connect()
     cursor = db.cursor()
     if karma is None:
         cursor.execute(
@@ -41,7 +55,7 @@ def karma_add(name):
 
 def karma_sub(name):
     karma = karma_ask(name)
-    db = db_karma_connect()
+    db = db_connect()
     cursor = db.cursor()
     if karma is None:
         cursor.execute(
@@ -61,7 +75,7 @@ def karma_sub(name):
 
 # add quotes
 def user_add(name):
-    db = db_karma_connect()
+    db = db_connect()
     cursor = db.cursor()
     cursor.execute(
         ''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,0))

@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-import KarmaBoi
+import dbopts
 import os
-import dbinit
 import time
 import slack_parse
 from slackclient import SlackClient
@@ -31,9 +30,9 @@ BOT_ID = bot_id(BOT_NAME)
 
 def main():
     # create database if it doesn't exist
-    if not os.path.exists(dbinit.DB_PATH + 'karmadb'):
+    if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
         print("No database exists \n  Creating databases for the first time")
-        dbinit.create_users_table()
+        dbopts.create_users_table()
 
     # connect to channel and do things
     if sc.rtm_connect():

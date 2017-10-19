@@ -1,4 +1,5 @@
-
+import re
+import dbopts
 
 def triage(sc, BOT_ID):
     """
@@ -7,19 +8,45 @@ def triage(sc, BOT_ID):
         special events
     """
     AT_BOT = "<@" + BOT_ID + ">"
+    karmaup = re.compile('.+\+{2,2}$')
+    karmadown = re.compile('.+-{2,2}$')
     for slack_message in sc.rtm_read():
-        message = slack_message.get('text')
+        text = slack_message.get('text')
         user = slack_message.get('user')
         channel = slack_message.get('channel')
-        if not message or not user:
+        if not text or not user:
             continue
         # Need to add users to ignore here - if user in "ignore list"....
+        text_list = text.split()
+        if text_list[0] is AT_BOT:
+            sc.rtm_send_message(channel, "that message was directed at me!")
+            continue
+        else:
+            for word in list(set(text_list)):
+                if karmaup.search(word):
+                    name = word.strip('+')      # can use "get UID" at this point if desired later
+                    karma = dbopts.karma_add(name)
+                    sc.rtm_send_message(channel,
+                        "{} now has {} points of karma".format(name,karma))
+                if karmadown.search(word):
+                    name = word.strip('-')
+                    karma = dbopts.karma_sub(name)
+                    sc.rtm_send_message(channel,
+                        "{} now has {} points of karma".format(name,karma))
 
 
 
-        sc.rtm_send_message(channel, "<@{} wrote \n \"{}\"".format(user,message))
 
-
-
-def slack_karma(slack_client, text):
-    food = text
+def get_uid(sc, name):
+    api_call = sc.api_call("users.list")
+    if api_call.get('ok'):
+        users = api_call.get('members')
+        for user in users:
+            if 'name' in user and user.get('name') == name:
+                uid = user.get('id')
+                return "<@"+uid+">"
+            elif 'display_name' in user.get('profile') and user.get('profile').get('display_name') == name:
+                uid = user.get('id')
+                return "<@"+uid+">"
+            else:
+                return name
