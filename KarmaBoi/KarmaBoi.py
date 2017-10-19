@@ -1,65 +1,50 @@
-import sqlite3
+#!/usr/bin/env python
+
+import KarmaBoi
 import os
-
-DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
-
-def db_karma_connect():
-    db = sqlite3.connect(DB_PATH + 'karmadb')
-    return db
+import dbinit
+import time
+import slack_parse
+from slackclient import SlackClient
 
 
-def karma_ask(name):
-    db = db_karma_connect()
-    cursor = db.cursor()
-    cursor.execute(''' SELECT karma FROM people WHERE name=? ''',(name,))
-    karma = cursor.fetchone()
-    db.close()
-    if karma is None:
-        return karma
+# These values are set in ~/.KarmaBoi and exported to environment by sourcing init.sh
+sc = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+BOT_NAME = os.environ.get('SLACK_BOT_NAME')
+READ_WEBSOCKET_DELAY = .5 #  delay in seconds between reading from firehose
+
+def bot_id(BOT_NAME):
+    api_call = sc.api_call("users.list")
+    if api_call.get('ok'):
+        # retrieve all users so we can find our bot
+        users = api_call.get('members')
+        for user in users:
+            if 'name' in user and user.get('name') == BOT_NAME:
+                BOT_ID = user.get('id')
+                return BOT_ID
     else:
-        karma = karma[0]
-        return karma
+        print("API call failed - please ensure your token and bot name are valid")
+        return NULL
+
+BOT_ID = bot_id(BOT_NAME)
 
 
-def karma_add(name):
-    karma = karma_ask(name)
-    db = db_karma_connect()
-    cursor = db.cursor()
-    if karma is None:
-        cursor.execute(''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,1))
-        db.commit()
-        db.close()
-        return 1
+def main():
+    # create database if it doesn't exist
+    if not os.path.exists(dbinit.DB_PATH + 'karmadb'):
+        print("No database exists \n  Creating databases for the first time")
+        dbinit.create_users_table()
+
+    # connect to channel and do things
+    if sc.rtm_connect():
+        print("StarterBot connected and running!")
+        while True:
+            slack_parse.triage(sc,BOT_ID)
+            time.sleep(READ_WEBSOCKET_DELAY)
     else:
-        karma = karma + 1
-        cursor.execute(''' UPDATE people SET karma = ? WHERE name = ? ''', (karma,name))
-        db.commit()
-        db.close()
-        return karma
-
-def karma_sub(name):
-    karma = karma_ask(name)
-    db = db_karma_connect()
-    cursor = db.cursor()
-    if karma is None:
-        cursor.execute(''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,-1))
-        db.commit()
-        db.close()
-        return -1
-    else:
-        karma = karma - 1
-        cursor.execute(''' UPDATE people SET karma = ? WHERE name = ? ''', (karma,name))
-        db.commit()
-        db.close()
-        return karma
+        print("Connection failed. Invalid Slack token or bot ID?")
 
 
 
-# add quotes
-def user_add(name):
-    db = db_karma_connect()
-    cursor = db.cursor()
-    cursor.execute(''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,0))
-    return name
-
-# add "is also"
+if __name__ == "__main__":
+    main()
