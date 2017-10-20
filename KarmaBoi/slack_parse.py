@@ -10,6 +10,8 @@ def triage(sc, BOT_ID):
     AT_BOT = "<@" + BOT_ID + ">"
     karmaup = re.compile('.+\+{2,2}$')
     karmadown = re.compile('.+-{2,2}$')
+    question = re.compile('.+\?{1,1}$')
+
     for slack_message in sc.rtm_read():
         text = slack_message.get('text')
         user = slack_message.get('user')
@@ -18,9 +20,22 @@ def triage(sc, BOT_ID):
             continue
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
+
         if text_list[0] == AT_BOT and len(text_list) > 2:
             handle_command(sc, text_list, channel)
             continue
+
+        elif question.search(text_list[0]):
+            word = text_list[0].strip('?')
+            if dbopts.also_ask(word):
+                also = dbopts.also_ask(word)
+                sc.rtm_send_message(channel,
+                    "I remember hearing that {} is also {}".format(word,also))
+            else:
+                sc.rtm_send_message(channel,
+                    "To be honest, I've never heard of {} before".format(word))
+            continue
+
         else:
             for word in list(set(text_list)):
                 if karmaup.search(word):
@@ -45,6 +60,15 @@ def handle_command(sc, text_list, channel):
         else:
             sc.rtm_send_message(channel,
                 "{} hasn't been given karma yet".format(name))
+    if text_list[2] == 'is' and text_list[3] == 'also':
+        if len(text_list) < 5:
+            sc.rtm_send_message(channel,
+                "Surely {} isn't nothing!".format(name))
+        else:
+            also = ' '.join(text_list[4:len(text_list)])
+            dbopts.also_add(text_list[1], also)
+            sc.rtm_send_message(channel,
+                "I'll keep that in mind")
 
 def get_uid(sc, name):
     api_call = sc.api_call("users.list")

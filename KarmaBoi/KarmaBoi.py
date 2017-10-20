@@ -32,7 +32,8 @@ def main():
     # create database if it doesn't exist
     if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
         print("No database exists \n  Creating databases for the first time")
-        dbopts.create_users_table()
+        dbopts.create_karma_table()
+        dbopts.create_also_table()
 
     # connect to channel and do things
     if sc.rtm_connect():

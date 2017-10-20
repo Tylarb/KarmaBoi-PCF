@@ -4,22 +4,30 @@ import os
 DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
 DB_NAME = 'karmadb'
 
+def db_connect():
+    db = sqlite3.connect(DB_PATH + DB_NAME)
+    return db
 
-def create_users_table():
+def create_karma_table():
     if not os.path.exists(DB_PATH):
         os.makedirs(DB_PATH)
-    db = sqlite3.connect(DB_PATH + DB_NAME)
+    db = db_connect()
     cursor = db.cursor()
     cursor.execute('''
-        CREATE TABLE people(name TEXT PRIMARY KEY, karma INTEGER)
+        CREATE TABLE IF NOT EXISTS people(name TEXT PRIMARY KEY, karma INTEGER)
     ''')
     db.commit()
     db.close()
 
-
-def db_connect():
-    db = sqlite3.connect(DB_PATH + DB_NAME)
-    return db
+def create_also_table():
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS isalso(id INTEGER PRIMARY KEY, name TEXT,
+        also TEXT)
+    ''')
+    db.commit()
+    db.close()
 
 
 def karma_ask(name):
@@ -82,3 +90,28 @@ def user_add(name):
     return name
 
 # add "is also"
+
+
+def also_add(name, also):
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute('''
+        INSERT INTO isalso(id,name,also) VALUES(NULL,?,?)
+        ''',(name,also))
+    db.close()
+
+
+
+def also_ask(name):
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute('''
+        SELECT also FROM isalso WHERE name=? LIMIT 1
+        ''',(name,))
+    also = cursor.fetchone()
+    db.close()
+    if also is None:
+        return also
+    else:
+        also = also[0]
+        return also
