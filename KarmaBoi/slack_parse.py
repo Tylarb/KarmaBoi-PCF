@@ -18,8 +18,8 @@ def triage(sc, BOT_ID):
             continue
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
-        if text_list[0] is AT_BOT:
-            sc.rtm_send_message(channel, "that message was directed at me!")
+        if text_list[0] == AT_BOT and len(text_list) > 2:
+            handle_command(sc, text_list, channel)
             continue
         else:
             for word in list(set(text_list)):
@@ -35,7 +35,16 @@ def triage(sc, BOT_ID):
                         "{} now has {} points of karma".format(name,karma))
 
 
-
+def handle_command(sc, text_list, channel):
+    if text_list[1] == 'rank':
+        name = text_list[2]
+        karma = dbopts.karma_ask(name)
+        if karma:
+            sc.rtm_send_message(channel,
+                "{} has {} points of karma".format(name,karma))
+        else:
+            sc.rtm_send_message(channel,
+                "{} hasn't been given karma yet".format(name))
 
 def get_uid(sc, name):
     api_call = sc.api_call("users.list")
