@@ -96,8 +96,9 @@ def also_add(name, also):
     db = db_connect()
     cursor = db.cursor()
     cursor.execute('''
-        INSERT INTO isalso(id,name,also) VALUES(NULL,?,?)
+        INSERT INTO isalso(name,also) VALUES(?,?)
         ''',(name,also))
+    db.commit()
     db.close()
 
 
@@ -106,7 +107,7 @@ def also_ask(name):
     db = db_connect()
     cursor = db.cursor()
     cursor.execute('''
-        SELECT also FROM isalso WHERE name=? LIMIT 1
+        SELECT also FROM isalso WHERE name=? ORDER BY RANDOM() LIMIT 1
         ''',(name,))
     also = cursor.fetchone()
     db.close()
