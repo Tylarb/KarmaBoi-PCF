@@ -40,11 +40,13 @@ def triage(sc, BOT_ID):
             for word in list(set(text_list)):
                 if karmaup.search(word):
                     name = word.strip('+')      # can use "get UID" at this point if desired later
+                    name = get_uid(sc, name.strip('@'))
                     karma = dbopts.karma_add(name)
                     sc.rtm_send_message(channel,
                         "{} now has {} points of karma".format(name,karma))
                 if karmadown.search(word):
                     name = word.strip('-')
+                    name = get_uid(sc, name.strip('@'))
                     karma = dbopts.karma_sub(name)
                     sc.rtm_send_message(channel,
                         "{} now has {} points of karma".format(name,karma))
@@ -53,6 +55,7 @@ def triage(sc, BOT_ID):
 def handle_command(sc, text_list, channel):
     if text_list[1] == 'rank':
         name = text_list[2]
+        name = get_uid(sc, name.strip('@'))
         karma = dbopts.karma_ask(name)
         if karma:
             sc.rtm_send_message(channel,
@@ -83,3 +86,5 @@ def get_uid(sc, name):
                 return "<@"+uid+">"
             else:
                 return name
+    else:
+        return name
