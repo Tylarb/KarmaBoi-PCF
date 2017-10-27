@@ -16,6 +16,7 @@ def triage(sc, BOT_ID):
     AT_BOT = "<@" + BOT_ID + ">"
     karmaup = re.compile('.+\+{2,2}$')
     karmadown = re.compile('.+-{2,2}$')
+    shameup = re.compile('.+~{2,2}$')
     question = re.compile('.+\?{1,1}$')
 
     for slack_message in sc.rtm_read():
@@ -43,7 +44,7 @@ def triage(sc, BOT_ID):
                     "To be honest, I've never heard of {} before".format(word))
             continue
 
-        else:
+        else:   ## karma and shame here
             for word in list(set(text_list)):
                 if karmaup.search(word):
                     name = word.strip('+')      # can use "get UID" at this point if desired later
@@ -57,6 +58,15 @@ def triage(sc, BOT_ID):
                     karma = dbopts.karma_sub(name)
                     sc.rtm_send_message(channel,
                         "{} now has {} points of karma".format(name,karma))
+                if shameup.search(word):
+                    logger.debug('shame was added for {}'.format(word))
+                    name = word.strip('~')
+                    shame = dbopts.shame_add(name)
+                    if shame == 1:
+                        sc.rtm_send_message(channel,
+                         'What is done cannot be undone.\n{} now has shame until the end of time'.format(name))
+                    else:
+                        sc.rtm_send_message(channel,'{} now has {} points of shame'.format(name,shame))
 
 
 def handle_command(sc, text_list, channel):
@@ -70,10 +80,21 @@ def handle_command(sc, text_list, channel):
         else:
             sc.rtm_send_message(channel,
                 "{} hasn't been given karma yet".format(name))
+
+    if text_list[1] == '~rank':
+        name = text_list[2]
+        shame = dbopts.shame_ask(name)
+        if shame:
+            sc.rtm_send_message(channel,
+                'I will forever remember that {} has {} points of shame.'.format(name,shame))
+        else:
+            sc.rtm_send_message(channel,
+                '{} is a shameless creature'.format(name))
+
     if text_list[2] == 'is' and text_list[3] == 'also':
         if len(text_list) < 5:
             sc.rtm_send_message(channel,
-                "Surely {} isn't nothing!".format(name))
+                "Surely {} isn't nothing!".format(text_list[1]))
         else:
             also = ' '.join(text_list[4:len(text_list)])
             dbopts.also_add(text_list[1], also)

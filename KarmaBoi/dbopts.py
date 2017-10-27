@@ -20,7 +20,8 @@ def create_karma_table():
     db = db_connect()
     cursor = db.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS people(name TEXT PRIMARY KEY, karma INTEGER)
+        CREATE TABLE IF NOT EXISTS people(
+        name TEXT PRIMARY KEY, karma INTEGER, shame INTEGER)
     ''')
     db.commit()
     logger.info('successfully created karma db for the first time')
@@ -37,7 +38,7 @@ def create_also_table():
     logger.info('successfully created also table for the first time')
     db.close()
 
-
+## Karma function
 def karma_ask(name):
     db = db_connect()
     cursor = db.cursor()
@@ -59,7 +60,7 @@ def karma_add(name):
     cursor = db.cursor()
     if karma is None:
         cursor.execute(
-            ''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,1))
+            ''' INSERT INTO people(name,karma,shame) VALUES(?,?,0) ''',(name,1))
         db.commit()
         logger.debug('Inserted into karmadb 1 karma for {}'.format(name))
         db.close()
@@ -79,7 +80,7 @@ def karma_sub(name):
     cursor = db.cursor()
     if karma is None:
         cursor.execute(
-            ''' INSERT INTO people(name,karma) VALUES(?,?) ''',(name,-1))
+            ''' INSERT INTO people(name,karma,shame) VALUES(?,?,0) ''',(name,-1))
         db.commit()
         logger.debug('Inserted into karmadb -1 karma for {}'.format(name))
         db.close()
@@ -93,6 +94,41 @@ def karma_sub(name):
         db.close()
         return karma
 
+## Shame functions
+
+def shame_ask(name):
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute(''' SELECT shame FROM people WHERE name=? ''',(name,))
+    shame = cursor.fetchone()
+    db.close()
+    if shame is None:
+        logger.debug('No shame found for name {}'.format(name))
+        return shame
+    else:
+        shame = shame[0]
+        logger.debug('shame of {} found for name {}'.format(shame, name))
+        return shame
+
+def shame_add(name):
+    shame = shame_ask(name)
+    db = db_connect()
+    cursor = db.cursor()
+    if shame is None:
+        cursor.execute(
+            ''' INSERT INTO people(name,karma,shame) VALUES(?,0,?) ''',(name,1))
+        db.commit()
+        logger.debug('Inserted into karmadb 1 shame for {}'.format(name))
+        db.close()
+        return 1
+    else:
+        shame = shame + 1
+        cursor.execute(
+            ''' UPDATE people SET shame = ? WHERE name = ? ''', (shame,name))
+        db.commit()
+        logger.debug('Inserted into karmadb {} shame for {}'.format(shame, name))
+        db.close()
+        return shame
 
 
 # add quotes
@@ -105,9 +141,9 @@ def user_add(name):
     logger.debug('added into people name {} with 0 karma'.format(name))
     return name
 
-# add "is also"
 
 
+# "is also" table functions
 def also_add(name, also):
     db = db_connect()
     cursor = db.cursor()

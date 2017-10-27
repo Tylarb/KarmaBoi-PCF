@@ -15,7 +15,7 @@ from slackclient import SlackClient
 # init.sh
 BOT_NAME = os.environ.get('SLACK_BOT_NAME')
 BOT_HOME = os.environ.get('BOT_HOME')
-READ_WEBSOCKET_DELAY = .5 #  delay in seconds between reading from firehose
+READ_WEBSOCKET_DELAY = .1 #  delay in seconds between reading from firehose
 
 
 # logger basic configuration
