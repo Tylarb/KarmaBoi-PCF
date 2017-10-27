@@ -47,28 +47,36 @@ def main():
     # connect to channel and do things
     attempt = 0
     MAX_ATTEMPTS = 30
+    '''
+    we'll try to connect/recover after a failure for 30 times - this should
+    be changed into separate connection vs. failure/recovery attempts later.
+    Probably should alwasy attempt to recover after broken pipe (or, recover
+    so many times wthin some time period), but
+    '''
     while  attempt < MAX_ATTEMPTS:
         sc = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+
         if sc.rtm_connect():
             logging.info('KarmaBoi connected')
             BOT_ID = bot_id(BOT_NAME,sc)
+
             try:
                 logging.info('now doing ~important~ things')
                 while True:
                     slack_parse.triage(sc,BOT_ID)
                     time.sleep(READ_WEBSOCKET_DELAY)
+
             except BrokenPipeError as e:
                 logging.error('connection failed with Broken Pipe')
                 logging.error(e)
-                logging,error('retrying connection in a few seconds...')
+                logging.error('retrying connection in a few seconds...')
                 time.sleep(5)
-                pass
+
             else:
                 logging.critical('general bot error: now ending this short life')
-
-        else:
-            attempt += 1
-            logging.warning('Attempt number {}'.format(attempt))
+                break
+        attempt += 1
+        logging.warning('Attempt number {} of {}'.format(attempt,MAX_ATTEMPTS))
 
     logging.critical('too many failed attempts - shutting down')
 
