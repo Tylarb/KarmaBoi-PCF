@@ -1,5 +1,10 @@
 import re
 import dbopts
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 def triage(sc, BOT_ID):
     """
@@ -7,6 +12,7 @@ def triage(sc, BOT_ID):
         be triaged to the command handler. Otherwise, the output is parsed for
         special events
     """
+    # special events - Karma up or down, or @bot; add
     AT_BOT = "<@" + BOT_ID + ">"
     karmaup = re.compile('.+\+{2,2}$')
     karmadown = re.compile('.+-{2,2}$')
@@ -22,6 +28,7 @@ def triage(sc, BOT_ID):
         text_list = text.split()
 
         if text_list[0] == AT_BOT and len(text_list) > 2:
+            logger.debug('Message directed at bot: {}'.format(text))
             handle_command(sc, text_list, channel)
             continue
 
@@ -40,13 +47,13 @@ def triage(sc, BOT_ID):
             for word in list(set(text_list)):
                 if karmaup.search(word):
                     name = word.strip('+')      # can use "get UID" at this point if desired later
-                    name = get_uid(sc, name.strip('@'))
+                    new_name = get_uid(sc, name.strip('@')) # WIP - this for debug currently
                     karma = dbopts.karma_add(name)
                     sc.rtm_send_message(channel,
                         "{} now has {} points of karma".format(name,karma))
                 if karmadown.search(word):
                     name = word.strip('-')
-                    name = get_uid(sc, name.strip('@'))
+                    new_name = get_uid(sc, name.strip('@')) #WIP
                     karma = dbopts.karma_sub(name)
                     sc.rtm_send_message(channel,
                         "{} now has {} points of karma".format(name,karma))
@@ -55,7 +62,7 @@ def triage(sc, BOT_ID):
 def handle_command(sc, text_list, channel):
     if text_list[1] == 'rank':
         name = text_list[2]
-        name = get_uid(sc, name.strip('@'))
+        new_name = get_uid(sc, name.strip('@')) #WIP
         karma = dbopts.karma_ask(name)
         if karma:
             sc.rtm_send_message(channel,
@@ -80,11 +87,16 @@ def get_uid(sc, name):
         for user in users:
             if 'name' in user and user.get('name') == name:
                 uid = user.get('id')
+                logger.debug('found UID {} with provided name'.format(uid))
                 return "<@"+uid+">"
             elif 'display_name' in user.get('profile') and user.get('profile').get('display_name') == name:
                 uid = user.get('id')
+                logger.debug(
+                    'found UID {} with provided display name'.format(uid))
                 return "<@"+uid+">"
             else:
+                logger.debug('No UID found for name {}'.format(name))
                 return name
     else:
+        logger.warning('API call failed in get_uid')
         return name
