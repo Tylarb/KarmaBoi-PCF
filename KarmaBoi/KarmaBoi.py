@@ -5,6 +5,8 @@ import os
 import time
 import slack_parse
 import logging
+import socket
+import errno
 from slackclient import SlackClient
 
 
@@ -60,12 +62,13 @@ def main():
                 logging.error(e)
                 logging,error('retrying connection in a few seconds...')
                 time.sleep(5)
-                continue
+                pass
             else:
                 logging.critical('general bot error: now ending this short life')
 
         else:
             attempt += 1
+            logging.warning('Attempt number {}'.format(attempt))
 
     logging.critical('too many failed attempts - shutting down')
 
