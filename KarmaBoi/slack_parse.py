@@ -39,9 +39,6 @@ def triage(sc, BOT_ID):
                 also = dbopts.also_ask(word)
                 sc.rtm_send_message(channel,
                     "I remember hearing that {} is also {}".format(word,also))
-            else:
-                sc.rtm_send_message(channel,
-                    "To be honest, I've never heard of {} before".format(word))
             continue
 
         else:   ## karma and shame here
