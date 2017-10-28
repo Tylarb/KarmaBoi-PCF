@@ -94,6 +94,29 @@ def karma_sub(name):
         db.close()
         return karma
 
+def karma_top():
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute(
+    ''' SELECT name, karma FROM people ORDER BY karma DESC LIMIT 5 '''
+    )
+    leaders = cursor.fetchall()
+#    for leader in leaders:
+#        leaderboard[leader[0]] = leader[1]
+    return leaders
+
+def karma_bottom():
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute(
+    ''' SELECT name, karma FROM people ORDER BY karma ASC LIMIT 5 '''
+    )
+    leaders = cursor.fetchall()
+    leaderboard = {}
+    for leader in leaders:
+        leaderboard[leader[0]] = leader[1]
+    return leaderboard
+
 ## Shame functions
 
 def shame_ask(name):

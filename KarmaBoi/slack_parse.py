@@ -28,7 +28,7 @@ def triage(sc, BOT_ID):
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
 
-        if text_list[0] == AT_BOT and len(text_list) > 2:
+        if text_list[0] == AT_BOT and len(text_list) > 1:
             logger.debug('Message directed at bot: {}'.format(text))
             handle_command(sc, text_list, channel)
             continue
@@ -67,7 +67,7 @@ def triage(sc, BOT_ID):
 
 
 def handle_command(sc, text_list, channel):
-    if text_list[1] == 'rank':
+    if len(text_list) > 2 and text_list[1] == 'rank':
         name = text_list[2]
         new_name = get_uid(sc, name.strip('@')) #WIP
         karma = dbopts.karma_ask(name)
@@ -78,7 +78,18 @@ def handle_command(sc, text_list, channel):
             sc.rtm_send_message(channel,
                 "{} hasn't been given karma yet".format(name))
 
-    if text_list[1] == '~rank':
+    if len(text_list) == 2 and text_list[1] == 'rank':
+        leaderboard = dbopts.karma_top()
+        sc.rtm_send_message(channel,
+        ''':fiestaparrot: :fiestaparrot: :fiestaparrot: TOP KARMA LEADERBOARD :fiestaparrot: :fiestaparrot: :fiestaparrot:
+        1. :dealwithitparrot: {l[0][0]} with {l[0][1]}
+        2. :aussieparrot: {l[1][0]} with {l[1][1]}
+        3. :derpparrot: {l[2][0]} with {l[2][1]}
+        4. :explodyparrot: {l[3][0]} with {l[3][1]}
+        5. :sadparrot: {l[4][0]} with {l[4][1]}
+        '''.format(l=leaderboard))
+
+    if text_list[1] == '~rank' and len(text_list) > 2:
         name = text_list[2]
         shame = dbopts.shame_ask(name)
         if shame:
@@ -86,9 +97,9 @@ def handle_command(sc, text_list, channel):
                 'I will forever remember that {} has {} points of shame.'.format(name,shame))
         else:
             sc.rtm_send_message(channel,
-                '{} is a shameless creature'.format(name))
+                '{} is in some ways a shameless creature'.format(name))
 
-    if text_list[2] == 'is' and text_list[3] == 'also':
+    if len(text_list) > 3 and text_list[2] == 'is' and text_list[3] == 'also':
         if len(text_list) < 5:
             sc.rtm_send_message(channel,
                 "Surely {} isn't nothing!".format(text_list[1]))
