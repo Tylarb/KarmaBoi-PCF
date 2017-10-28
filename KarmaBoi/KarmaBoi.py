@@ -41,13 +41,13 @@ def bot_id(BOT_NAME,sc):
 def main():
     # create database if it doesn't exist
     if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
-        logger.info("No database exists \n  Creating databases for the first time")
+        logger.info("No database exists. Creating databases for the first time")
         dbopts.create_karma_table()
         dbopts.create_also_table()
 
     # connect to channel and do things
     attempt = 0
-    MAX_ATTEMPTS = 30
+    MAX_ATTEMPTS = 500
     '''
     we'll try to connect/recover after a failure for 30 times - this should
     be changed into separate connection vs. failure/recovery attempts later.
