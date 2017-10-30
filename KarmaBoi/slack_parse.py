@@ -1,6 +1,7 @@
 import re
 import dbopts
 import logging
+import textwrap as tw
 
 
 logger = logging.getLogger(__name__)
@@ -60,13 +61,17 @@ def triage(sc, BOT_ID):
                     name = word.strip('~')
                     shame = dbopts.shame_add(name)
                     if shame == 1:
-                        sc.rtm_send_message(channel,
-                         'What is done cannot be undone.\n{} now has shame until the end of time'.format(name))
+                        sc.rtm_send_message(channel,tw.dedents(
+                         'What is done cannot be undone.\n{} now has shame \
+                         until the end of time').format(name))
                     else:
-                        sc.rtm_send_message(channel,'{} now has {} points of shame'.format(name,shame))
+                        sc.rtm_send_message(channel,
+                        '{} now has {} points of shame'.format(name,shame))
 
 
 def handle_command(sc, text_list, channel):
+
+    # person rankings - karma and shame
     if len(text_list) > 2 and text_list[1] == 'rank':
         name = text_list[2]
         new_name = get_uid(sc, name.strip('@')) #WIP
@@ -78,27 +83,57 @@ def handle_command(sc, text_list, channel):
             sc.rtm_send_message(channel,
                 "{} hasn't been given karma yet".format(name))
 
+    if len(text_list) > 2 and text_list[1] == '~rank':
+        name = text_list[2]
+        shame = dbopts.shame_ask(name)
+        if shame:
+            sc.rtm_send_message(channel, tw.dedent(
+                'I will forever remember that {} has {} points of \
+                shame.'.format(name,shame)))
+        else:
+            sc.rtm_send_message(channel,
+                '{} is in some ways a shameless creature'.format(name))
+
+    # leaderboards
     if len(text_list) == 2 and text_list[1] == 'rank':
         leaderboard = dbopts.karma_top()
-        sc.rtm_send_message(channel,
-        ''':fiestaparrot: :fiestaparrot: :fiestaparrot: TOP KARMA LEADERBOARD :fiestaparrot: :fiestaparrot: :fiestaparrot:
+        sc.rtm_send_message(channel,tw.dedent(
+        ''':fiestaparrot: :fiestaparrot: :fiestaparrot: TOP KARMA LEADERBOARD \
+        :fiestaparrot: :fiestaparrot: :fiestaparrot:
         1. :dealwithitparrot: {l[0][0]} with {l[0][1]}
         2. :aussieparrot: {l[1][0]} with {l[1][1]}
         3. :derpparrot: {l[2][0]} with {l[2][1]}
         4. :explodyparrot: {l[3][0]} with {l[3][1]}
         5. :sadparrot: {l[4][0]} with {l[4][1]}
-        '''.format(l=leaderboard))
+        '''.format(l=leaderboard)))
 
-    if text_list[1] == '~rank' and len(text_list) > 2:
-        name = text_list[2]
-        shame = dbopts.shame_ask(name)
-        if shame:
-            sc.rtm_send_message(channel,
-                'I will forever remember that {} has {} points of shame.'.format(name,shame))
-        else:
-            sc.rtm_send_message(channel,
-                '{} is in some ways a shameless creature'.format(name))
+    if len(text_list) == 2 and text_list[1] == '!rank':
+        leaderboard = dbopts.karma_bottom()
+        sc.rtm_send_message(channel,tw.dedent(
+        ''':sadparrot: :sadparrot: :sadparrot: BOTTOM KARMA LEADERBOARD \
+        :sadparrot: :sadparrot: :sadparrot:
+        1. :sad_unikitty: {l[0][0]} with {l[0][1]}
+        2. :sadpanda: {l[1][0]} with {l[1][1]}
+        3. :tippy-sad: {l[2][0]} with {l[2][1]}
+        4. :sadcloud: {l[3][0]} with {l[3][1]}
+        5. :sadrabbit: {l[4][0]} with {l[4][1]}
+        '''.format(l=leaderboard)))
 
+
+    if len(text_list) == 2 and text_list[1] == '~rank':
+        leaderboard = dbopts.shame_top()
+        sc.rtm_send_message(channel,tw.dedent(
+        ''':darth: :darth: :darth: SHAME LEADERBOARD \
+        :darth: :darth: :darth:
+        1. {l[0][0]} with {l[0][1]}
+        2. {l[1][0]} with {l[1][1]}
+        3. {l[2][0]} with {l[2][1]}
+        4. {l[3][0]} with {l[3][1]}
+        5. {l[4][0]} with {l[4][1]}
+        '''.format(l=leaderboard)))
+
+
+    # is also
     if len(text_list) > 3 and text_list[2] == 'is' and text_list[3] == 'also':
         if len(text_list) < 5:
             sc.rtm_send_message(channel,
@@ -118,7 +153,8 @@ def get_uid(sc, name):
                 uid = user.get('id')
                 logger.debug('found UID {} with provided name'.format(uid))
                 return "<@"+uid+">"
-            elif 'display_name' in user.get('profile') and user.get('profile').get('display_name') == name:
+            elif ('display_name' in user.get('profile')
+                    and user.get('profile').get('display_name') == name):
                 uid = user.get('id')
                 logger.debug(
                     'found UID {} with provided display name'.format(uid))

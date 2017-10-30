@@ -101,8 +101,7 @@ def karma_top():
     ''' SELECT name, karma FROM people ORDER BY karma DESC LIMIT 5 '''
     )
     leaders = cursor.fetchall()
-#    for leader in leaders:
-#        leaderboard[leader[0]] = leader[1]
+    logger.debug('fetched top karma values')
     return leaders
 
 def karma_bottom():
@@ -112,10 +111,8 @@ def karma_bottom():
     ''' SELECT name, karma FROM people ORDER BY karma ASC LIMIT 5 '''
     )
     leaders = cursor.fetchall()
-    leaderboard = {}
-    for leader in leaders:
-        leaderboard[leader[0]] = leader[1]
-    return leaderboard
+    logger.debug('fetched bottom karma values')
+    return leaders
 
 ## Shame functions
 
@@ -154,7 +151,17 @@ def shame_add(name):
         return shame
 
 
-# add quotes
+def shame_top():
+    db = db_connect()
+    cursor = db.cursor()
+    cursor.execute(
+    ''' SELECT name, shame FROM people ORDER BY shame DESC LIMIT 5 '''
+    )
+    leaders = cursor.fetchall()
+    logger.debug('fetched top shame values')
+    return leaders
+
+# WIP add quotes here
 def user_add(name):
     db = db_connect()
     cursor = db.cursor()

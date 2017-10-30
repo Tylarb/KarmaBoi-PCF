@@ -1,21 +1,20 @@
 #!/usr/bin/env python
 
 import dbopts
-import os
+import os, sys, traceback
 import time
 import slack_parse
 import logging
-import socket
 import errno
+import textwrap as tw
 from slackclient import SlackClient
-
 
 
 # These values are set in ~/.KarmaBoi and exported to environment by sourcing
 # init.sh
 BOT_NAME = os.environ.get('SLACK_BOT_NAME')
 BOT_HOME = os.environ.get('BOT_HOME')
-READ_WEBSOCKET_DELAY = .1 #  delay in seconds between reading from firehose
+READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
 
 # logger basic configuration
@@ -49,12 +48,14 @@ def main():
     attempt = 0
     MAX_ATTEMPTS = 500
     '''
-    we'll try to connect/recover after a failure for 30 times - this should
-    be changed into separate connection vs. failure/recovery attempts later.
-    Probably should alwasy attempt to recover after broken pipe (or, recover
-    so many times wthin some time period), but
+    we'll try to connect/recover after a failure for MAX_ATTEMPTS times - this
+    should probably be changed into separate connection vs. failure/recovery
+    attempts later.
+    Probably should always attempt to recover after broken pipe (or, recover
+    so many times wthin some time period), but stop general errors after a
+    number of attempts. Need to collect logs on what is causing failures first
     '''
-    while  attempt < MAX_ATTEMPTS:
+    while attempt < MAX_ATTEMPTS:
         sc = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
 
         if sc.rtm_connect():
@@ -73,11 +74,18 @@ def main():
                 logger.error('retrying connection in a few seconds...')
                 time.sleep(5)
 
+            except Exception as e:
+                logger.error('Connection failed with some other error')
+                logger.exception(e)
+                logger.error('trying to restore bot in a few seconds')
+                time.sleep(5)
+
             else:
                 logger.critical('general bot error: now ending this short life')
+                logger.exception("Error found:")
                 break
         attempt += 1
-        logger.warning('Attempt number {} of {}'.format(attempt,MAX_ATTEMPTS))
+        logger.warning('Attempt number {} of {}'.format(attempt, MAX_ATTEMPTS))
 
     logger.critical('too many failed attempts - shutting down')
 
