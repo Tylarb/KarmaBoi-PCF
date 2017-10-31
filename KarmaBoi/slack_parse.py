@@ -14,7 +14,7 @@ def triage(sc, BOT_ID):
         special events
     """
     # special events - Karma up or down, or @bot; add
-    AT_BOT = "<@" + BOT_ID + ">"
+    AT_BOT = '<@' + BOT_ID + '>'
     karmaup = re.compile('.+\+{2,2}$')
     karmadown = re.compile('.+-{2,2}$')
     shameup = re.compile('.+~{2,2}$')
@@ -28,7 +28,7 @@ def triage(sc, BOT_ID):
             continue
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
-
+        logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
         if text_list[0] == AT_BOT and len(text_list) > 1:
             logger.debug('Message directed at bot: {}'.format(text))
             handle_command(sc, text_list, channel)
@@ -39,31 +39,42 @@ def triage(sc, BOT_ID):
             if dbopts.also_ask(word):
                 also = dbopts.also_ask(word)
                 sc.rtm_send_message(channel,
-                    "I remember hearing that {} is also {}".format(word,also))
+                    'I remember hearing that {} is also {}'.format(word,also))
             continue
 
         else:   ## karma and shame here
             for word in list(set(text_list)):
                 if karmaup.search(word):
                     name = word.strip('+')      # can use "get UID" at this point if desired later
-                    new_name = get_uid(sc, name.strip('@')) # WIP - this for debug currently
-                    karma = dbopts.karma_add(name)
-                    sc.rtm_send_message(channel,
-                        "{} now has {} points of karma".format(name,karma))
+                    if name == '<@' + user + '>':
+                        logger.debug('user {} attempted to give personal karma'.format(user))
+                        shame = dbopts.shame_add(name)
+                        sc.rtm_send_message(channel, tw.dedent('''\
+                            Self promotion will get you nowhere.
+                            {} now has {} points of shame forever.
+                            ''').format(name, shame))
+                    else:
+                        karma = dbopts.karma_add(name)
+                        sc.rtm_send_message(channel,
+                            '{} now has {} points of karma'.format(name,karma))
                 if karmadown.search(word):
                     name = word.strip('-')
-                    new_name = get_uid(sc, name.strip('@')) #WIP
+                    if name == '<@' + user + '>':
+                        sc.rtm_send_message(channel, tw.dedent('''
+                        I still love you, even if you don\'t always love yourself
+                        '''))
                     karma = dbopts.karma_sub(name)
                     sc.rtm_send_message(channel,
-                        "{} now has {} points of karma".format(name,karma))
+                        '{} now has {} points of karma'.format(name,karma))
                 if shameup.search(word):
                     logger.debug('shame was added for {}'.format(word))
                     name = word.strip('~')
                     shame = dbopts.shame_add(name)
                     if shame == 1:
-                        sc.rtm_send_message(channel,tw.dedents(
-                         'What is done cannot be undone.\n{} now has shame \
-                         until the end of time').format(name))
+                        sc.rtm_send_message(channel,tw.dedent('''
+                         What is done cannot be undone.
+                         {} now has shame until the end of time
+                         ''').format(name))
                     else:
                         sc.rtm_send_message(channel,
                         '{} now has {} points of shame'.format(name,shame))
@@ -78,18 +89,18 @@ def handle_command(sc, text_list, channel):
         karma = dbopts.karma_ask(name)
         if karma:
             sc.rtm_send_message(channel,
-                "{} has {} points of karma".format(name,karma))
+                '{} has {} points of karma'.format(name,karma))
         else:
             sc.rtm_send_message(channel,
-                "{} hasn't been given karma yet".format(name))
+                '{} hasn\'t been given karma yet'.format(name))
 
     if len(text_list) > 2 and text_list[1] == '~rank':
         name = text_list[2]
         shame = dbopts.shame_ask(name)
         if shame:
-            sc.rtm_send_message(channel, tw.dedent(
-                'I will forever remember that {} has {} points of \
-                shame.'.format(name,shame)))
+            sc.rtm_send_message(channel, tw.dedent('''
+                I will forever remember that {} has {} points of shame.
+                ''').format(name,shame))
         else:
             sc.rtm_send_message(channel,
                 '{} is in some ways a shameless creature'.format(name))
