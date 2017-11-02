@@ -28,7 +28,7 @@ def triage(sc, BOT_ID):
             continue
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
-        logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
+        # logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
         if text_list[0] == AT_BOT and len(text_list) > 1:
             logger.debug('Message directed at bot: {}'.format(text))
             handle_command(sc, text_list, channel)

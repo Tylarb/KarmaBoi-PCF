@@ -31,6 +31,7 @@ def bot_id(BOT_NAME,sc):
         for user in users:
             if 'name' in user and user.get('name') == BOT_NAME:
                 BOT_ID = user.get('id')
+                logger.debug('Returned Bot ID {}'.format(BOT_ID))
                 return BOT_ID
     else:
         logger.critical(
