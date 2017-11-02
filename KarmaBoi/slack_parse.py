@@ -1,6 +1,7 @@
 import re
 import dbopts
 import logging
+import time
 import textwrap as tw
 
 
@@ -176,3 +177,58 @@ def get_uid(sc, name):
     else:
         logger.warning('API call failed in get_uid')
         return name
+
+
+class VoteCache:
+    """
+    Timed cache to reduce upvote/downvote spam. [user] cannot vote
+    [target] before VOTE_DELAY seconds
+    """
+
+    VOTE_DELAY = 120
+
+    def __init__(self):
+        self.cache = {}
+        self.max_cache_size = 500  # size of cache
+
+    def __contains__(self, key):
+        """
+        True or false depending on if key is in cache
+        """
+        return key in self.cache
+
+    def update(self, key):
+        """
+        Updates the cache with key after cleaning it of old values
+        """
+        self.clean()
+        if key not in self.cache and len(self.cache) < max_cache_size:
+            self.cache[key] = {'time_added': time.time()}
+
+        elif key not in self.cache and len(self.cache) >= max_cache_size:
+            self.remove_old()
+            self.cache[key] = {'time_added': time.time()}
+
+    def clean(self):
+        """
+        Removes any item older than VOTE_DELAY from the cache
+        """
+        for key in self.cache:
+            if self.cache[key]['time_added'] > time.time() - VOTE_DELAY:
+                self.cache.pop(key)
+
+
+    def remove_old(self):
+        """
+        This should not generally be used - only occurs if we're actually
+        reaching the cache size AFTER clearing old values. Ideally, cache
+        and clearn should be large enough that this function is never used
+        """
+        oldest = None
+        for key in self.cache:
+            if oldest is None:
+                oldest = key
+            elif (self.cache[key]['time_added'] <
+                self.cache[oldest]['time_added'])
+                oldest = key
+        self.cache.pop(oldest)
