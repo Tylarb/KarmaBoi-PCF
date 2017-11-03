@@ -8,7 +8,7 @@ import textwrap as tw
 logger = logging.getLogger(__name__)
 
 
-def triage(sc, BOT_ID):
+def triage(sc, BOT_ID, kcache):
     """
         Here, we read and triage all messages. Messages directed to the bot will
         be triaged to the command handler. Otherwise, the output is parsed for
@@ -55,30 +55,52 @@ def triage(sc, BOT_ID):
                             {} now has {} points of shame forever.
                             ''').format(name, shame))
                     else:
-                        karma = dbopts.karma_add(name)
-                        sc.rtm_send_message(channel,
-                            '{} now has {} points of karma'.format(name,karma))
+                        key = user + '-' + name
+                        if key not in kcache:
+                            kcache.update(key)
+                            karma = dbopts.karma_add(name)
+                            sc.rtm_send_message(channel,
+                                '{} now has {} points of karma'.format(name,karma))
+                        else:
+                            t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+                            logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
+                            # Perhaps we can add a DM to the user who upvoted here...
+
                 if karmadown.search(word):
                     name = word.strip('-')
                     if name == '<@' + user + '>':
                         sc.rtm_send_message(channel, tw.dedent('''
                         I still love you, even if you don\'t always love yourself
                         '''))
-                    karma = dbopts.karma_sub(name)
-                    sc.rtm_send_message(channel,
-                        '{} now has {} points of karma'.format(name,karma))
-                if shameup.search(word):
-                    logger.debug('shame was added for {}'.format(word))
-                    name = word.strip('~')
-                    shame = dbopts.shame_add(name)
-                    if shame == 1:
-                        sc.rtm_send_message(channel,tw.dedent('''
-                         What is done cannot be undone.
-                         {} now has shame until the end of time
-                         ''').format(name))
-                    else:
+                    key = user + '-' + name
+                    if key not in kcache:
+                        kcache.update(key)
+                        karma = dbopts.karma_sub(name)
                         sc.rtm_send_message(channel,
-                        '{} now has {} points of shame'.format(name,shame))
+                            '{} now has {} points of karma'.format(name,karma))
+                    else:
+                        t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+                        logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
+                        # Perhaps we can add a DM to the user who upvoted here...
+
+                if shameup.search(word):
+                    name = word.strip('~')
+                    key = user + '~' + name
+                    if key not in kcache:
+                        kcache.update(key)
+                        shame = dbopts.shame_add(name)
+                        if shame == 1:
+                            sc.rtm_send_message(channel,tw.dedent('''
+                            What is done cannot be undone.
+                            {} now has shame until the end of time
+                            ''').format(name))
+                        else:
+                            sc.rtm_send_message(channel,
+                            '{} now has {} points of shame'.format(name,shame))
+                    else:
+                        t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+                        logger.debug('{} seconds remaining to add shame for {}'.format(t_remain, key))
+                        # Perhaps we can add a DM to the user who upvoted here...
 
 
 def handle_command(sc, text_list, channel):
@@ -156,6 +178,8 @@ def handle_command(sc, text_list, channel):
             sc.rtm_send_message(channel,
                 "I'll keep that in mind")
 
+# currently unused
+
 def get_uid(sc, name):
     api_call = sc.api_call("users.list")
     if api_call.get('ok'):
@@ -177,58 +201,3 @@ def get_uid(sc, name):
     else:
         logger.warning('API call failed in get_uid')
         return name
-
-
-class VoteCache:
-    """
-    Timed cache to reduce upvote/downvote spam. [user] cannot vote
-    [target] before VOTE_DELAY seconds
-    """
-
-    VOTE_DELAY = 120
-
-    def __init__(self):
-        self.cache = {}
-        self.max_cache_size = 500  # size of cache
-
-    def __contains__(self, key):
-        """
-        True or false depending on if key is in cache
-        """
-        return key in self.cache
-
-    def update(self, key):
-        """
-        Updates the cache with key after cleaning it of old values
-        """
-        self.clean()
-        if key not in self.cache and len(self.cache) < max_cache_size:
-            self.cache[key] = {'time_added': time.time()}
-
-        elif key not in self.cache and len(self.cache) >= max_cache_size:
-            self.remove_old()
-            self.cache[key] = {'time_added': time.time()}
-
-    def clean(self):
-        """
-        Removes any item older than VOTE_DELAY from the cache
-        """
-        for key in self.cache:
-            if self.cache[key]['time_added'] > time.time() - VOTE_DELAY:
-                self.cache.pop(key)
-
-
-    def remove_old(self):
-        """
-        This should not generally be used - only occurs if we're actually
-        reaching the cache size AFTER clearing old values. Ideally, cache
-        and clearn should be large enough that this function is never used
-        """
-        oldest = None
-        for key in self.cache:
-            if oldest is None:
-                oldest = key
-            elif (self.cache[key]['time_added'] <
-                self.cache[oldest]['time_added'])
-                oldest = key
-        self.cache.pop(oldest)

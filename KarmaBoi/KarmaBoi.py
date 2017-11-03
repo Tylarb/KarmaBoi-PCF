@@ -8,6 +8,7 @@ import logging
 import errno
 import textwrap as tw
 from slackclient import SlackClient
+from cache import TimedCache
 
 
 # These values are set in ~/.KarmaBoi and exported to environment by sourcing
@@ -18,7 +19,7 @@ READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
 
 # logger basic configuration
-logging.basicConfig(filename=BOT_HOME+'/log',level=logging.DEBUG,
+logging.basicConfig(filename=BOT_HOME+'/log',level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ def main():
     '''
     while attempt < MAX_ATTEMPTS:
         sc = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+        kcache = TimedCache()
 
         if sc.rtm_connect():
             logger.info('KarmaBoi connected')
@@ -66,7 +68,7 @@ def main():
             try:
                 logger.info('now doing ~important~ things')
                 while True:
-                    slack_parse.triage(sc,BOT_ID)
+                    slack_parse.triage(sc,BOT_ID, kcache)
                     time.sleep(READ_WEBSOCKET_DELAY)
 
             except BrokenPipeError as e:
