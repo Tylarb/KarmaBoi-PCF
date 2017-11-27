@@ -46,7 +46,9 @@ def triage(sc, BOT_ID, kcache):
         else:   ## karma and shame here
             for word in list(set(text_list)):
                 if karmaup.search(word):
-                    name = word.strip('+')      # can use "get UID" at this point if desired later
+                    name = word.rstrip('+')      # can use "get UID" at this point if desired later
+                    if name == '':
+                        break
                     if name == '<@' + user + '>':
                         logger.debug('user {} attempted to give personal karma'.format(user))
                         shame = dbopts.shame_add(name)
@@ -67,7 +69,9 @@ def triage(sc, BOT_ID, kcache):
                             # Perhaps we can add a DM to the user who upvoted here...
 
                 if karmadown.search(word):
-                    name = word.strip('-')
+                    name = word.rstrip('-')
+                    if name == '':
+                        break
                     if name == '<@' + user + '>':
                         sc.rtm_send_message(channel, tw.dedent('''
                         I still love you, even if you don\'t always love yourself
@@ -84,7 +88,9 @@ def triage(sc, BOT_ID, kcache):
                         # Perhaps we can add a DM to the user who upvoted here...
 
                 if shameup.search(word):
-                    name = word.strip('~')
+                    name = word.rstrip('~')
+                    if name == '':
+                        break
                     key = user + '~' + name
                     if key not in kcache:
                         kcache.update(key)
