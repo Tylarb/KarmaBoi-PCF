@@ -19,7 +19,7 @@ READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
 
 # logger basic configuration
-logging.basicConfig(filename=BOT_HOME+'/log',level=logging.INFO,
+logging.basicConfig(filename=BOT_HOME+'/log',level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
 

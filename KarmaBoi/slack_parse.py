@@ -20,6 +20,8 @@ def triage(sc, BOT_ID, kcache):
     karmadown = re.compile('.+-{2,2}$')
     shameup = re.compile('.+~{2,2}$')
     question = re.compile('.+\?{1,1}$')
+    nonkarma = re.compile('^\W+$')
+    weblink = re.compile('^<http.+>$') # needed because slack doesn't handle web links printed with <> for some reason
 
     for slack_message in sc.rtm_read():
         text = slack_message.get('text')
@@ -39,6 +41,9 @@ def triage(sc, BOT_ID, kcache):
             word = text_list[0].strip('?')
             if dbopts.also_ask(word):
                 also = dbopts.also_ask(word)
+                if weblink.search(also):
+                    logger.debug('trimming web link {}'.format(also))
+                    also = also.strip('<>').split('|')[0]
                 sc.rtm_send_message(channel,
                     'I remember hearing that {} is also {}'.format(word,also))
             continue
@@ -47,7 +52,8 @@ def triage(sc, BOT_ID, kcache):
             for word in list(set(text_list)):
                 if karmaup.search(word):
                     name = word.rstrip('+')      # can use "get UID" at this point if desired later
-                    if name == '':
+                    if name == '' or nonkarma.search(name):
+                        logger.debug('Ignored word {}'.format(name))
                         break
                     if name == '<@' + user + '>':
                         logger.debug('user {} attempted to give personal karma'.format(user))
@@ -70,7 +76,8 @@ def triage(sc, BOT_ID, kcache):
 
                 if karmadown.search(word):
                     name = word.rstrip('-')
-                    if name == '':
+                    if name == '' or nonkarma.search(name):
+                        logger.debug('Ignored word {}'.format(name))
                         break
                     if name == '<@' + user + '>':
                         sc.rtm_send_message(channel, tw.dedent('''
@@ -89,7 +96,8 @@ def triage(sc, BOT_ID, kcache):
 
                 if shameup.search(word):
                     name = word.rstrip('~')
-                    if name == '':
+                    if name == '' or nonkarma.search(name):
+                        logger.debug('Ignored word {}'.format(name))
                         break
                     key = user + '~' + name
                     if key not in kcache:
@@ -110,6 +118,7 @@ def triage(sc, BOT_ID, kcache):
 
 
 def handle_command(sc, text_list, channel):
+
 
     # person rankings - karma and shame
     if len(text_list) > 2 and text_list[1] == 'rank':
