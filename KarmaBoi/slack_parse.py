@@ -16,11 +16,7 @@ def triage(sc, BOT_ID, kcache):
     """
     # special events - Karma up or down, or @bot; add
     AT_BOT = '<@' + BOT_ID + '>'
-    karmaup = re.compile('.+\+{2,2}$')
-    karmadown = re.compile('.+-{2,2}$')
-    shameup = re.compile('.+~{2,2}$')
     question = re.compile('.+\?{1,1}$')
-    nonkarma = re.compile('^\W+$')
     weblink = re.compile('^<http.+>$') # needed because slack doesn't handle web links printed with <> for some reason
 
     for slack_message in sc.rtm_read():
@@ -37,7 +33,7 @@ def triage(sc, BOT_ID, kcache):
             handle_command(sc, text_list, channel)
             continue
 
-        elif question.search(text_list[0]):
+        elif question.search(text_list[0]) and len(text_list) == 1:
             word = text_list[0].strip('?')
             if dbopts.also_ask(word):
                 also = dbopts.also_ask(word)
@@ -50,71 +46,80 @@ def triage(sc, BOT_ID, kcache):
 
         else:   ## karma and shame here
             for word in list(set(text_list)):
-                if karmaup.search(word):
-                    name = word.rstrip('+')      # can use "get UID" at this point if desired later
-                    if name == '' or nonkarma.search(name):
-                        logger.debug('Ignored word {}'.format(name))
-                        break
-                    if name == '<@' + user + '>':
-                        logger.debug('user {} attempted to give personal karma'.format(user))
-                        shame = dbopts.shame_add(name)
-                        sc.rtm_send_message(channel, tw.dedent('''\
-                            Self promotion will get you nowhere.
-                            {} now has {} points of shame forever.
-                            ''').format(name, shame))
-                    else:
-                        key = user + '-' + name
-                        if key not in kcache:
-                            kcache.update(key)
-                            karma = dbopts.karma_add(name)
-                            sc.rtm_send_message(channel,
-                                '{} now has {} points of karma'.format(name,karma))
-                        else:
-                            t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-                            logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
-                            # Perhaps we can add a DM to the user who upvoted here...
+                 if handle_word(sc, word, kcache, user, channel):
+                     break
 
-                if karmadown.search(word):
-                    name = word.rstrip('-')
-                    if name == '' or nonkarma.search(name):
-                        logger.debug('Ignored word {}'.format(name))
-                        break
-                    if name == '<@' + user + '>':
-                        sc.rtm_send_message(channel, tw.dedent('''
-                        I still love you, even if you don\'t always love yourself
-                        '''))
-                    key = user + '-' + name
-                    if key not in kcache:
-                        kcache.update(key)
-                        karma = dbopts.karma_sub(name)
-                        sc.rtm_send_message(channel,
-                            '{} now has {} points of karma'.format(name,karma))
-                    else:
-                        t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-                        logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
-                        # Perhaps we can add a DM to the user who upvoted here...
+def handle_word(sc, word, kcache, user, channel):
+    karmaup = re.compile('.+\+{2,2}$')
+    karmadown = re.compile('.+-{2,2}$')
+    shameup = re.compile('.+~{2,2}$')
+    nonkarma = re.compile('^\W+$')
 
-                if shameup.search(word):
-                    name = word.rstrip('~')
-                    if name == '' or nonkarma.search(name):
-                        logger.debug('Ignored word {}'.format(name))
-                        break
-                    key = user + '~' + name
-                    if key not in kcache:
-                        kcache.update(key)
-                        shame = dbopts.shame_add(name)
-                        if shame == 1:
-                            sc.rtm_send_message(channel,tw.dedent('''
-                            What is done cannot be undone.
-                            {} now has shame until the end of time
-                            ''').format(name))
-                        else:
-                            sc.rtm_send_message(channel,
-                            '{} now has {} points of shame'.format(name,shame))
-                    else:
-                        t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-                        logger.debug('{} seconds remaining to add shame for {}'.format(t_remain, key))
-                        # Perhaps we can add a DM to the user who upvoted here...
+    if karmaup.search(word):
+       name = word.rstrip('+')      # can use "get UID" at this point if desired later
+       if name == '' or nonkarma.search(name):
+           logger.debug('Ignored word {}'.format(name))
+           return True
+       if name == '<@' + user + '>':
+           logger.debug('user {} attempted to give personal karma'.format(user))
+           shame = dbopts.shame_add(name)
+           sc.rtm_send_message(channel, tw.dedent('''\
+               Self promotion will get you nowhere.
+               {} now has {} points of shame forever.
+               ''').format(name, shame))
+       else:
+           key = user + '-' + name
+           if key not in kcache:
+               kcache.update(key)
+               karma = dbopts.karma_add(name)
+               sc.rtm_send_message(channel,
+                   '{} now has {} points of karma'.format(name,karma))
+           else:
+               t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+               logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
+               # Perhaps we can add a DM to the user who upvoted here...
+    if karmadown.search(word):
+       name = word.rstrip('-')
+       if name == '' or nonkarma.search(name):
+           logger.debug('Ignored word {}'.format(name))
+           return True
+       if name == '<@' + user + '>':
+           sc.rtm_send_message(channel, tw.dedent('''
+           I still love you, even if you don\'t always love yourself
+           '''))
+       key = user + '-' + name
+       if key not in kcache:
+           kcache.update(key)
+           karma = dbopts.karma_sub(name)
+           sc.rtm_send_message(channel,
+               '{} now has {} points of karma'.format(name,karma))
+       else:
+           t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+           logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
+           # Perhaps we can add a DM to the user who upvoted here...
+    if shameup.search(word):
+       name = word.rstrip('~')
+       if name == '' or nonkarma.search(name):
+           logger.debug('Ignored word {}'.format(name))
+           return True
+       key = user + '~' + name
+       if key not in kcache:
+           kcache.update(key)
+           shame = dbopts.shame_add(name)
+           if shame == 1:
+               sc.rtm_send_message(channel,tw.dedent('''
+               What is done cannot be undone.
+               {} now has shame until the end of time
+               ''').format(name))
+           else:
+               sc.rtm_send_message(channel,
+               '{} now has {} points of shame'.format(name,shame))
+       else:
+           t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+           logger.debug('{} seconds remaining to add shame for {}'.format(t_remain, key))
+           # Perhaps we can add a DM to the user who upvoted here...
+
+
 
 
 def handle_command(sc, text_list, channel):
