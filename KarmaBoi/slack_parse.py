@@ -131,8 +131,9 @@ def handle_command(sc, text_list, channel):
         new_name = get_uid(sc, name.strip('@')) #WIP
         karma = dbopts.karma_ask(name)
         if karma:
+            rank = dbopts.karma_rank(name)
             sc.rtm_send_message(channel,
-                '{} has {} points of karma'.format(name,karma))
+                '{} is rank {} with {} points of karma'.format(name, rank, karma))
         else:
             sc.rtm_send_message(channel,
                 '{} hasn\'t been given karma yet'.format(name))
