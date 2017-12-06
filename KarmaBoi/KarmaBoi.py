@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def bot_id(BOT_NAME,sc):
-    user_obj = sc.api_call("users.list")
+    user_obj = sc.api_call('users.list')
     if user_obj.get('ok'):
         # retrieve all users so we can find our bot
         users = user_obj.get('members')
