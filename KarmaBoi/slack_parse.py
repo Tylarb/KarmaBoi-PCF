@@ -30,7 +30,7 @@ def triage(sc, BOT_ID, kcache):
             continue
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
-        #logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
+        logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
         if text_list[0] == AT_BOT and len(text_list) > 1:
             logger.debug('Message directed at bot: {}'.format(text))
             handle_command(sc, text_list, channel)
@@ -76,11 +76,19 @@ def handle_word(sc, word, kcache, user, channel):
                kcache.update(key)
                karma = dbopts.karma_add(name)
                sc.rtm_send_message(channel,
-                   '{} now has {} points of karma'.format(name,karma))
+                    '{} now has {} points of karma'.format(name,karma))
            else:
                t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+               t_warn = tw.dedent('''\
+                    Please wait {} seconds before adjusting karma of {}
+                    '''.format(int(t_remain), name)
+               )
+               sc.api_call('chat.postEphemeral',
+                    channel = channel,
+                    text = t_warn,
+                    user = user)
                logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
-               # Perhaps we can add a DM to the user who upvoted here...
+
     if karmadown.search(word):
        name = word.rstrip('-')
        if name == '' or nonkarma.search(name):
@@ -98,8 +106,16 @@ def handle_word(sc, word, kcache, user, channel):
                '{} now has {} points of karma'.format(name,karma))
        else:
            t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
+           t_warn = tw.dedent('''\
+                Please wait {} seconds before adjusting karma of {}
+                '''.format(int(t_remain), name)
+           )
+           sc.api_call('chat.postEphemeral',
+                channel = channel,
+                text = t_warn,
+                user = user)
            logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
-           # Perhaps we can add a DM to the user who upvoted here...
+
     if shameup.search(word):
        name = word.rstrip('~')
        if name == '' or nonkarma.search(name):
@@ -119,9 +135,19 @@ def handle_word(sc, word, kcache, user, channel):
                '{} now has {} points of shame'.format(name,shame))
        else:
            t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-           logger.debug('{} seconds remaining to add shame for {}'.format(t_remain, key))
-           # Perhaps we can add a DM to the user who upvoted here...
+           t_warn = tw.dedent('''\
+                Please wait {} seconds before adjusting karma of {}
+                '''.format(int(t_remain), name)
+           )
+           sc.api_call('chat.postEphemeral',
+                channel = channel,
+                text = t_warn,
+                user = user)
 
+           logger.debug(
+                '{} seconds remaining to add shame for {}'.format(t_remain,
+                key)
+           )
 
 
 

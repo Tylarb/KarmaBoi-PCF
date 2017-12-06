@@ -13,7 +13,7 @@ class TimedCache:
     service at some point...
     """
 
-    VOTE_DELAY = 120
+    VOTE_DELAY = 300
 
     def __init__(self):
         self.cache = {}
