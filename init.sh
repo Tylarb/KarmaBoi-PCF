@@ -18,6 +18,7 @@ if [ -f $token ]; then
 	export SLACK_BOT_NAME=$(grep name $token| cut -d : -f 2)
 	export SLACK_BOT_TOKEN=$(grep token $token| cut -d : -f 2)
 	source $DIR/KarmaBoi/env_KarmaBoi/bin/activate
+	pip install -r $DIR/requirements.txt
 else
 	echo "Please add your bot name and token at ~/.KarmaBoi/bot_token\nhttps://api.slack.com/bot-users\n\nFORMAT: \nname:[bot-name]\ntoken:[bot-token]"
 fi
