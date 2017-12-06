@@ -25,7 +25,7 @@ def triage(sc, BOT_ID, kcache):
         channel = slack_message.get('channel')
         if not text or not user:
             continue
-        if user == USLACKBOT:
+        if user == 'USLACKBOT':
             logger.debug('USLACKBOT sent message {} which is ignored'.format(text))
             continue
         # Need to add users to ignore here - if user in "ignore list"....
