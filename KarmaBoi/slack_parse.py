@@ -86,7 +86,8 @@ def handle_word(sc, word, kcache, user, channel):
                sc.api_call('chat.postEphemeral',
                     channel = channel,
                     text = t_warn,
-                    user = user)
+                    user = user,
+                    as_user = True)
                logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
 
     if karmadown.search(word):
@@ -113,7 +114,8 @@ def handle_word(sc, word, kcache, user, channel):
            sc.api_call('chat.postEphemeral',
                 channel = channel,
                 text = t_warn,
-                user = user)
+                user = user
+                as_user = True)
            logger.debug('{} seconds remaining to adjust karma for {}'.format(t_remain, key))
 
     if shameup.search(word):
@@ -142,7 +144,8 @@ def handle_word(sc, word, kcache, user, channel):
            sc.api_call('chat.postEphemeral',
                 channel = channel,
                 text = t_warn,
-                user = user)
+                user = user
+                as_user = True)
 
            logger.debug(
                 '{} seconds remaining to add shame for {}'.format(t_remain,
