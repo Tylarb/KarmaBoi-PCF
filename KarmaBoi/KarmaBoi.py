@@ -9,6 +9,9 @@ import errno
 import textwrap as tw
 from slackclient import SlackClient
 from cache import TimedCache
+import argparse
+
+
 
 
 # These values are set in ~/.KarmaBoi and exported to environment by sourcing
@@ -18,10 +21,25 @@ BOT_HOME = os.environ.get('BOT_HOME')
 READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
 
-# logger basic configuration
-logging.basicConfig(filename=BOT_HOME+'/log',level=logging.DEBUG,
+parser = argparse.ArgumentParser()
+parser.add_argument('-v', '--verbose',
+    help='add debug messages to log output', action='store_true')
+args = parser.parse_args()
+
+# set up log setting
+if args.verbose:
+    logLevel = logging.DEBUG
+else:
+    logLevel = logging.INFO
+
+logging.basicConfig(filename=BOT_HOME+'/log', level=logLevel,
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+
+
 logger = logging.getLogger(__name__)
+
+
+
 
 
 def bot_id(BOT_NAME,sc):
@@ -39,7 +57,16 @@ def bot_id(BOT_NAME,sc):
             "API call failed - please ensure your token and bot name are valid")
         return NULL
 
+
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbose',
+        help='add debug messages to log output', action='store_true')
+    args = parser.parse_args()
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+
     # create database if it doesn't exist
     if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
         logger.info("No database exists. Creating databases for the first time")

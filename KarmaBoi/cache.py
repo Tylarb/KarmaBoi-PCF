@@ -3,7 +3,6 @@ import time
 
 logger = logging.getLogger(__name__)
 
-
 class TimedCache:
     """
     Timed cache to reduce upvote/downvote spam. [user] cannot vote
@@ -12,6 +11,7 @@ class TimedCache:
     This functionality is easily provided by Gemfire and may be moved to that
     service at some point...
     """
+
 
     VOTE_DELAY = 300
 
