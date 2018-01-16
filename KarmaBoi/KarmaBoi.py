@@ -7,6 +7,7 @@ import slack_parse
 import logging
 import errno
 import textwrap as tw
+import threading
 from slackclient import SlackClient
 from cache import TimedCache
 import argparse
@@ -65,6 +66,14 @@ def bot_id(BOT_NAME,sc):
         return NULL
 
 @app.route('/')
+def status():
+    return 'I\'m alive!'
+
+
+def listenMain():
+    app.run(host='0.0.0.0', port=port)
+    logger.info('Listening on port {}'.format(port))
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -127,5 +136,7 @@ def main():
     logger.critical('too many failed attempts - shutting down')
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=port)
-#    main()
+    s = threading.Thread(name='slack_bot', target=main)
+    f = threading.Thread(name='flask_server', target=listenMain)
+    s.start()
+    f.start()
