@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import dbopts
+# import dbopts
 import os, sys, traceback
 import time
 import slack_parse
@@ -17,7 +17,7 @@ import argparse
 # These values are set in ~/.KarmaBoi and exported to environment by sourcing
 # init.sh
 BOT_NAME = os.environ.get('SLACK_BOT_NAME')
-BOT_HOME = os.environ.get('BOT_HOME')
+# BOT_HOME = os.environ.get('BOT_HOME')
 READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
 
@@ -32,7 +32,7 @@ if args.verbose:
 else:
     logLevel = logging.INFO
 
-logging.basicConfig(filename=BOT_HOME+'/log', level=logLevel,
+logging.basicConfig(level=logLevel,
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 
 
@@ -68,14 +68,14 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     # create database if it doesn't exist
-    if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
-        logger.info("No database exists. Creating databases for the first time")
-        dbopts.create_karma_table()
-        dbopts.create_also_table()
+#    if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
+#        logger.info("No database exists. Creating databases for the first time")
+#        dbopts.create_karma_table()
+#        dbopts.create_also_table()
 
     # connect to channel and do things
-    attempt = 0
-    MAX_ATTEMPTS = 500
+#    attempt = 0
+#    MAX_ATTEMPTS = 500
     '''
     we'll try to connect/recover after a failure for MAX_ATTEMPTS times - this
     should probably be changed into separate connection vs. failure/recovery
@@ -84,7 +84,7 @@ def main():
     so many times wthin some time period), but stop general errors after a
     number of attempts. Need to collect logs on what is causing failures first
     '''
-    while attempt < MAX_ATTEMPTS:
+    while True:
         sc = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
         kcache = TimedCache()
 

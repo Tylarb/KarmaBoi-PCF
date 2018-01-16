@@ -1,5 +1,5 @@
 import re
-import dbopts
+#import dbopts
 import logging
 import time
 import textwrap as tw
@@ -29,7 +29,8 @@ def triage(sc, BOT_ID, kcache):
         if user == 'USLACKBOT':
             logger.debug('USLACKBOT sent message {} which is ignored'.format(text))
             continue
-        # Need to add users to ignore here - if user in "ignore list"....
+        sc.rtm_send_message(channel,'User {} sent message "{}"'.format(user,text))
+'''        # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
         # Uncomment this for explicit message debugging
         # logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
@@ -40,19 +41,20 @@ def triage(sc, BOT_ID, kcache):
 
         elif question.search(text_list[0]) and len(text_list) == 1:
             word = text_list[0].strip('?')
-            if dbopts.also_ask(word):
-                also = dbopts.also_ask(word)
-                if weblink.search(also):
-                    logger.debug('trimming web link {}'.format(also))
-                    also = also.strip('<>').split('|')[0]
-                sc.rtm_send_message(channel,
-                    'I remember hearing that {} is also {}'.format(word,also))
-            continue
+#            if dbopts.also_ask(word):
+#                also = dbopts.also_ask(word)
+#                if weblink.search(also):
+#                    logger.debug('trimming web link {}'.format(also))
+#                    also = also.strip('<>').split('|')[0]
+#                sc.rtm_send_message(channel,
+#                    'I remember hearing that {} is also {}'.format(word,also))
+#            continue
 
         else:   ## karma and shame here
             for word in list(set(text_list)):
                  if handle_word(sc, word, kcache, user, channel):
                      continue
+
 
 def handle_word(sc, word, kcache, user, channel):
 
@@ -70,10 +72,10 @@ def handle_word(sc, word, kcache, user, channel):
        if name == '<@' + user + '>':
            logger.debug('user {} attempted to give personal karma'.format(user))
            shame = dbopts.shame_add(name)
-           sc.rtm_send_message(channel, tw.dedent('''\
+#fix           sc.rtm_send_message(channel, tw.dedent(''\
                Self promotion will get you nowhere.
                {} now has {} points of shame forever.
-               ''').format(name, shame))
+              '').format(name, shame))
        else:
            key = user + '-' + name
            if key not in kcache:
@@ -83,9 +85,9 @@ def handle_word(sc, word, kcache, user, channel):
                     '{} now has {} points of karma'.format(name,karma))
            else:
                t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-               t_warn = tw.dedent('''\
+#fix               t_warn = tw.dedent(''\
                     Please wait {} seconds before adjusting karma of {}
-                    '''.format(int(t_remain), name)
+                    ''.format(int(t_remain), name)
                )
                sc.api_call('chat.postEphemeral',
                     channel = channel,
@@ -100,9 +102,9 @@ def handle_word(sc, word, kcache, user, channel):
            logger.debug('Ignored word {}'.format(name))
            return True
        if name == '<@' + user + '>':
-           sc.rtm_send_message(channel, tw.dedent('''
+#fix           sc.rtm_send_message(channel, tw.dedent(''
            I still love you, even if you don\'t always love yourself
-           '''))
+           ''))
        key = user + '-' + name
        if key not in kcache:
            kcache.update(key)
@@ -111,9 +113,9 @@ def handle_word(sc, word, kcache, user, channel):
                '{} now has {} points of karma'.format(name,karma))
        else:
            t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-           t_warn = tw.dedent('''\
+#fix           t_warn = tw.dedent(''\
                 Please wait {} seconds before adjusting karma of {}
-                '''.format(int(t_remain), name)
+                ''.format(int(t_remain), name)
            )
            sc.api_call('chat.postEphemeral',
                 channel = channel,
@@ -132,18 +134,18 @@ def handle_word(sc, word, kcache, user, channel):
            kcache.update(key)
            shame = dbopts.shame_add(name)
            if shame == 1:
-               sc.rtm_send_message(channel,tw.dedent('''
+#fix               sc.rtm_send_message(channel,tw.dedent(''
                What is done cannot be undone.
                {} now has shame until the end of time
-               ''').format(name))
+               '').format(name))
            else:
                sc.rtm_send_message(channel,
                '{} now has {} points of shame'.format(name,shame))
        else:
            t_remain = kcache.timeout - (time.time() - kcache.cache[key]['time_added'])
-           t_warn = tw.dedent('''\
+#plsfix           t_warn = tw.dedent(''\
                 Please wait {} seconds before adjusting karma of {}
-                '''.format(int(t_remain), name)
+                ''.format(int(t_remain), name)
            )
            sc.api_call('chat.postEphemeral',
                 channel = channel,
@@ -178,9 +180,9 @@ def handle_command(sc, text_list, channel):
         name = text_list[2]
         shame = dbopts.shame_ask(name)
         if shame:
-            sc.rtm_send_message(channel, tw.dedent('''
+#plsfix            sc.rtm_send_message(channel, tw.dedent(''
                 I will forever remember that {} has {} points of shame.
-                ''').format(name,shame))
+                '').format(name,shame))
         else:
             sc.rtm_send_message(channel,
                 '{} is in some ways a shameless creature'.format(name))
@@ -189,39 +191,39 @@ def handle_command(sc, text_list, channel):
     if len(text_list) == 2 and text_list[1] == 'rank':
         leaderboard = dbopts.karma_top()
         sc.rtm_send_message(channel,tw.dedent(
-        ''':fiestaparrot: :fiestaparrot: :fiestaparrot: TOP KARMA LEADERBOARD \
+#fix me        '':fiestaparrot: :fiestaparrot: :fiestaparrot: TOP KARMA LEADERBOARD \
         :fiestaparrot: :fiestaparrot: :fiestaparrot:
         1. :dealwithitparrot: {l[0][0]} with {l[0][1]}
         2. :aussieparrot: {l[1][0]} with {l[1][1]}
         3. :derpparrot: {l[2][0]} with {l[2][1]}
         4. :explodyparrot: {l[3][0]} with {l[3][1]}
         5. :sadparrot: {l[4][0]} with {l[4][1]}
-        '''.format(l=leaderboard)))
+#fix me        ''.format(l=leaderboard)))
 
     if len(text_list) == 2 and text_list[1] == '!rank':
         leaderboard = dbopts.karma_bottom()
         sc.rtm_send_message(channel,tw.dedent(
-        ''':sadparrot: :sadparrot: :sadparrot: BOTTOM KARMA LEADERBOARD \
+#fix me        '':sadparrot: :sadparrot: :sadparrot: BOTTOM KARMA LEADERBOARD \
         :sadparrot: :sadparrot: :sadparrot:
         1. :sad_unikitty: {l[0][0]} with {l[0][1]}
         2. :sadpanda: {l[1][0]} with {l[1][1]}
         3. :tippy-sad: {l[2][0]} with {l[2][1]}
         4. :sadcloud: {l[3][0]} with {l[3][1]}
         5. :sadrabbit: {l[4][0]} with {l[4][1]}
-        '''.format(l=leaderboard)))
+# fix me        ''.format(l=leaderboard)))
 
 
     if len(text_list) == 2 and text_list[1] == '~rank':
         leaderboard = dbopts.shame_top()
         sc.rtm_send_message(channel,tw.dedent(
-        ''':darth: :darth: :darth: SHAME LEADERBOARD \
+#fix me       '':darth: :darth: :darth: SHAME LEADERBOARD \
         :darth: :darth: :darth:
         1. {l[0][0]} with {l[0][1]}
         2. {l[1][0]} with {l[1][1]}
         3. {l[2][0]} with {l[2][1]}
         4. {l[3][0]} with {l[3][1]}
         5. {l[4][0]} with {l[4][1]}
-        '''.format(l=leaderboard)))
+# fix me       ''.format(l=leaderboard)))
 
 
     # is also
@@ -259,3 +261,4 @@ def get_uid(sc, name):
     else:
         logger.warning('API call failed in get_uid')
         return name
+'''
