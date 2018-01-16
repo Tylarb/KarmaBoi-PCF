@@ -10,6 +10,9 @@ import textwrap as tw
 from slackclient import SlackClient
 from cache import TimedCache
 import argparse
+from flask import Flask
+
+
 
 
 
@@ -19,6 +22,7 @@ import argparse
 BOT_NAME = os.environ.get('SLACK_BOT_NAME')
 # BOT_HOME = os.environ.get('BOT_HOME')
 READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
+
 
 
 parser = argparse.ArgumentParser()
@@ -39,6 +43,9 @@ logging.basicConfig(level=logLevel,
 logger = logging.getLogger(__name__)
 
 
+app = Flask(__name__)
+
+port = int(os.getenv("PORT",8080))
 
 
 
@@ -57,7 +64,7 @@ def bot_id(BOT_NAME,sc):
             "API call failed - please ensure your token and bot name are valid")
         return NULL
 
-
+@app.route('/')
 def main():
 
     parser = argparse.ArgumentParser()
@@ -120,4 +127,5 @@ def main():
     logger.critical('too many failed attempts - shutting down')
 
 if __name__ == "__main__":
-    main()
+    app.run(host='0.0.0.0', port=port)
+#    main()
