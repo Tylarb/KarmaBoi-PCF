@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# import dbopts
+import dbopts
 import os, sys, traceback
 import time
 import slack_parse
