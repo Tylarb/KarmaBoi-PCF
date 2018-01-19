@@ -30,19 +30,6 @@ READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
 env = AppEnv()
 
-'''
-Setting environment specific settings - log to file if we're on a physical
-machine
-'''
-if env.name == None:
-    BOT_HOME = os.environ.get('BOT_HOME')
-    envHandler = logging.FileHandler("{}/{}.log".format(BOT_HOME,'KarmaBoi'))
-    if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
-            logger.info("No database exists. Creating databases for the first time")
-            dbopts.create_karma_table()
-            dbopts.create_also_table()
-else:
-    envHandler = logging.StreamHandler()
 
 
 parser = argparse.ArgumentParser()
@@ -57,6 +44,16 @@ else:
     logLevel = logging.INFO
 
 
+'''
+Setting environment specific logger settings - log to file if not using CF
+'''
+if env.name == None:
+    BOT_HOME = os.environ.get('BOT_HOME')
+    envHandler = logging.FileHandler("{}/{}.log".format(BOT_HOME,'KarmaBoi'))
+else:
+    envHandler = logging.StreamHandler()
+
+
 logging.basicConfig(level=logLevel, handlers=[envHandler],
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 
@@ -64,6 +61,11 @@ logging.basicConfig(level=logLevel, handlers=[envHandler],
 logger = logging.getLogger(__name__)
 
 
+
+'''
+Using flask as a simple server - provides a quick status check, and, more
+importantly, allows it to work on Cloud Foundry by providing socket listening
+'''
 app = Flask(__name__)
 
 port = int(os.getenv("PORT",8080))
@@ -90,25 +92,17 @@ def status():
     return 'I\'m alive!'
 
 
-def listenMain():
+def webMain():
     app.run(host='0.0.0.0', port=port)
     logger.info('Listening on port {}'.format(port))
 
-def main():
+def botMain():
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose',
-        help='add debug messages to log output', action='store_true')
-    args = parser.parse_args()
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
-
-    # create database if it doesn't exist
-#    if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
-#        logger.info("No database exists. Creating databases for the first time")
-#        dbopts.create_karma_table()
-#        dbopts.create_also_table()
-
+    if dbopts.db_connect():
+        logger.info('DB connection successful, continuing')
+    else:
+        logger.error('DB connection not successful, exiting')
+        exit(1)
     # connect to channel and do things
     attempt = 0
     MAX_ATTEMPTS = 500
@@ -156,7 +150,7 @@ def main():
     logger.critical('too many failed attempts - shutting down')
 
 if __name__ == "__main__":
-    s = threading.Thread(name='slack_bot', target=main)
-    f = threading.Thread(name='flask_server', target=listenMain)
+    s = threading.Thread(name='slack_bot', target=botMain)
+    f = threading.Thread(name='flask_server', target=webMain)
     s.start()
     f.start()
