@@ -1,10 +1,23 @@
 import sqlite3
 import os
 import logging
+from cfenv import AppEnv
 
-DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
 DB_NAME = 'karmadb'
+env = AppEnv()
 logger = logging.getLogger(__name__)
+
+if env.name == None:
+    DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
+
+
+
+'''
+Check what env we have - if on PCF, use mysql connector. Otherwise, we can
+use sqlite to build our database. Fortunately, command execution libraries
+are identical once we have a cursor.
+'''
+
 
 def db_connect():
     try:

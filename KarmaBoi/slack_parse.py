@@ -29,7 +29,6 @@ def triage(sc, BOT_ID, kcache):
         if user == 'USLACKBOT':
             logger.debug('USLACKBOT sent message {} which is ignored'.format(text))
             continue
-        sc.rtm_send_message(channel,'User {} sent message "{}"'.format(user,text))
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
         # Uncomment this for explicit message debugging

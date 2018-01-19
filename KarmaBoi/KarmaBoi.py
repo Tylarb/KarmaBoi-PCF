@@ -12,18 +12,37 @@ from slackclient import SlackClient
 from cache import TimedCache
 import argparse
 from flask import Flask
+from cfenv import AppEnv
 
 
 
 
 
 
-# These values are set in ~/.KarmaBoi and exported to environment by sourcing
-# init.sh
+'''
+These values are set in ~/.KarmaBoi and exported to environment by sourcing
+init.sh if on a local host. If on PCF, be sure to set the environment variables
+'SLACK_BOT_NAME' and 'SLACK_BOT_TOKEN'
+'''
 BOT_NAME = os.environ.get('SLACK_BOT_NAME')
-# BOT_HOME = os.environ.get('BOT_HOME')
+SLACK_BOT_TOKEN = os.environ.get('SLACK_BOT_TOKEN')
 READ_WEBSOCKET_DELAY = .1  # delay in seconds between reading from firehose
 
+env = AppEnv()
+
+'''
+Setting environment specific settings - log to file if we're on a physical
+machine
+'''
+if env.name == None:
+    BOT_HOME = os.environ.get('BOT_HOME')
+    envHandler = logging.FileHandler("{}/{}.log".format(BOT_HOME,'KarmaBoi'))
+    if not os.path.exists(dbopts.DB_PATH + 'karmadb'):
+            logger.info("No database exists. Creating databases for the first time")
+            dbopts.create_karma_table()
+            dbopts.create_also_table()
+else:
+    envHandler = logging.StreamHandler()
 
 
 parser = argparse.ArgumentParser()
@@ -37,7 +56,8 @@ if args.verbose:
 else:
     logLevel = logging.INFO
 
-logging.basicConfig(level=logLevel,
+
+logging.basicConfig(level=logLevel, handlers=[envHandler],
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 
 
@@ -90,8 +110,8 @@ def main():
 #        dbopts.create_also_table()
 
     # connect to channel and do things
-#    attempt = 0
-#    MAX_ATTEMPTS = 500
+    attempt = 0
+    MAX_ATTEMPTS = 500
     '''
     we'll try to connect/recover after a failure for MAX_ATTEMPTS times - this
     should probably be changed into separate connection vs. failure/recovery
@@ -101,7 +121,7 @@ def main():
     number of attempts. Need to collect logs on what is causing failures first
     '''
     while True:
-        sc = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+        sc = SlackClient(SLACK_BOT_TOKEN)
         kcache = TimedCache()
 
         if sc.rtm_connect():
