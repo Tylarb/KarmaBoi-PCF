@@ -30,7 +30,7 @@ if env.name == None:
     '''
 else:
     try:
-        mysql_env = env.get_service(label='p-mysql')
+        mysql_env = env.get_service(label='p.mysql')
         mysql_creds = mysql_env.credentials
         mysql_config = {
             'user': mysql_creds.get('username'),
@@ -41,6 +41,7 @@ else:
             }
     except:
         logger.critical('not able to generate mysql_env - ensure mysql is bound and lable is correct')
+        raise
     PEOPLE_TABLE = '''
     CREATE TABLE IF NOT EXISTS people(id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     name TEXT, karma INTEGER, shame INTEGER)
