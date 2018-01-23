@@ -231,7 +231,7 @@ def handle_command(sc, text_list, channel):
             3. {l[2][0]} with {l[2][1]}
             4. {l[3][0]} with {l[3][1]}
             5. {l[4][0]} with {l[4][1]}
-        '''.format(l=leaderboard)))
+            '''.format(l=leaderboard)))
 
 
     # is also

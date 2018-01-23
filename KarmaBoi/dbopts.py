@@ -20,239 +20,306 @@ are identical once we have a cursor.
 
 if env.name == None:
     DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
+    DB_NAME = 'karmadb'
+    PEOPLE_TABLE = '''
+    CREATE TABLE IF NOT EXISTS people(id INT PRIMARY KEY,
+    name TEXT, karma INTEGER, shame INTEGER)'''
+    ALSO_TABLE = '''
+    CREATE TABLE IF NOT EXISTS isalso(id INT PRIMARY KEY,
+    name TEXT, also TEXT)
+    '''
 else:
-    mysql_env = env.get_service(label='p-mysql')
-    mysql_creds = mysql_env.credentials
-    mysql_config = {
-        'user': mysql_creds.get('username'),
-        'password': mysql_creds.get('password'),
-        'host': mysql_creds.get('hostname'),
-        'port': mysql_creds.get('port'),
-        'raise_on_warnings': True,
-    }
-
-
-
-
-
-
+    try:
+        mysql_env = env.get_service(label='p-mysql')
+        mysql_creds = mysql_env.credentials
+        mysql_config = {
+            'user': mysql_creds.get('username'),
+            'password': mysql_creds.get('password'),
+            'host': mysql_creds.get('hostname'),
+            'port': mysql_creds.get('port'),
+            'database': mysql_creds.get('name')
+            }
+    except:
+        logger.critical('not able to generate mysql_env - ensure mysql is bound and lable is correct')
+    PEOPLE_TABLE = '''
+    CREATE TABLE IF NOT EXISTS people(id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    name TEXT, karma INTEGER, shame INTEGER)
+    '''
+    ALSO_TABLE = '''
+    CREATE TABLE IF NOT EXISTS isalso(id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    name TEXT, also TEXT)
+    '''
 
 def db_connect():
     if env.name == None:
+        logger.debug('Local install, attempting to connect to sqlite DB')
         if not os.path.exists(DB_PATH + 'karmadb'):
-            logger.info("No database exists. Creating databases for the first time")
+            logger.info('No database exists. Creating databases for the first time')
             if not os.path.exists(DB_PATH):
                 os.makedirs(DB_PATH)
             db = sqlite3.connect(DB_PATH + DB_NAME)
-            create_karma_table(db)
-            create_also_table(db)
+            create_karma_table()
+            create_also_table()
             return db
         else:
             try:
                 db = sqlite3.connect(DB_PATH + DB_NAME)
                 return db
-            except:
+            except Exception as e:
                 logger.error('db connection to sqlite was not successful')
-                exit(1)
+                logger.Exception
+                raise
     else:
         try:
-            db = mysql.connector.connect(**mysql_config, database=DB_NAME)
-            return db
+            logger.debug('Detected Cloud Foundry, connecting to msql')
+            cnx = mysql.connector.connect(**mysql_config)
+            return cnx
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 logger.error('Username or password is incorrect')
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                logger.warning('''
-                    Database does not exist, attempting to create it now
-                    ''')
-                cnx = mysql.connector.connect(**mysql_config)
-                create_db(cnx)
-                try:
-                    create_karma_table(cnx)
-                    create_also_table(cnx)
-                    return cnx
-                except mysql.connector.Error as err:
-                    logger.error('failed creating tables with error {}'.err)
+                raise Exception('Could not connect, bad user or pwd')
             else:
-                logger.error(err)
+                logger.error('Could not connect to DB for some other reason: {}'.format(err))
 
-
-def create_db(cnx):
-    cursor = cnx.cursor()
+def check_tables():
+    db = db_connect()
+    cursor = db.cursor(buffered=True)
     try:
         cursor.execute('''
-            CREATE DATABASE '{}' DEFAULT CHARACTER SET 'utf8'
-            '''.format(DB_NAME))
-    except mysql.connector.Error as err:
-        logger.error("Failed creating database: {}".format(err))
-        exit(1)
+            SELECT 1 FROM people LIMIT 1;
+            ''')
+        logger.debug('people table exists')
+    except:
+        raise
+    try:
+        cursor.execute('''
+            SELECT 1 FROM people LIMIT 1;
+            ''')
+        logger.debug('people table exists')
+    except:
+        raise
+    cursor.fetchall()
 
 
-def create_karma_table(db):
+def create_karma_table():
+    db = db_connect()
     cursor = db.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS people(
-        name TEXT PRIMARY KEY, karma INTEGER, shame INTEGER)
-    ''')
+    cursor.execute(PEOPLE_TABLE)
     db.commit()
     logger.info('successfully created karma db for the first time')
 
-def create_also_table(db):
+def create_also_table():
+    db = db_connect()
     cursor = db.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS isalso(id INTEGER PRIMARY KEY, name TEXT,
-        also TEXT)
-    ''')
+    cursor.execute(ALSO_TABLE)
     db.commit()
     logger.info('successfully created also table for the first time')
 
-## Karma function
+## Karma functions
 def karma_ask(name):
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute(''' SELECT karma FROM people WHERE name='{}' '''.format(name))
-    karma = cursor.fetchone()
-    db.close()
-    if karma is None:
-        logger.debug('No karma found for name {}'.format(name))
-        return karma
-    else:
-        karma = karma[0]
-        logger.debug('karma of {} found for name {}'.format(karma, name))
-        return karma
+    try:
+        cursor.execute(''' SELECT karma FROM people WHERE name='{}' '''.format(name))
+        karma = cursor.fetchone()
+        if karma is None:
+            logger.debug('No karma found for name {}'.format(name))
+            db.close()
+            return karma
+        else:
+            karma = karma[0]
+            logger.debug('karma of {} found for name {}'.format(karma, name))
+            db.close()
+            return karma
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
 
 def karma_rank(name):
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute('''
-        SELECT (SELECT COUNT(*) FROM people AS t2 WHERE t2.karma > t1.karma)
-        AS row_Num FROM people AS t1 WHERE name='{}'
-    '''.format(name))
-    rank = cursor.fetchone()[0] + 1
-    db.close
-    logger.debug('Rank of {} found for name {}'.format(rank, name))
-    return rank
+    try:
+        cursor.execute('''
+            SELECT (SELECT COUNT(*) FROM people AS t2 WHERE t2.karma > t1.karma)
+            AS row_Num FROM people AS t1 WHERE name='{}'
+        '''.format(name))
+        rank = cursor.fetchone()[0] + 1
+        logger.debug('Rank of {} found for name {}'.format(rank, name))
+        db.close()
+        return rank
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
+
 
 def karma_add(name):
     karma = karma_ask(name)
     db = db_connect()
     cursor = db.cursor()
     if karma is None:
-        cursor.execute(
-            '''
-            INSERT INTO people(name,karma,shame) VALUES('{}',1,0)
-            '''.format(name))
-        db.commit()
-        logger.debug('Inserted into karmadb 1 karma for {}'.format(name))
-        db.close()
-        return 1
+        try:
+            cursor.execute(
+                '''
+                INSERT INTO people(name,karma,shame) VALUES('{}',1,0)
+                '''.format(name))
+            db.commit()
+            logger.debug('Inserted into karmadb 1 karma for {}'.format(name))
+            return 1
+        except Exception as e:
+            logger.error('Execution failed with error: {}'.format(e))
+            raise
     else:
         karma = karma + 1
-        cursor.execute(
-            '''
-            UPDATE people SET karma = {0} WHERE name = '{1}'
-            '''.format(karma,name))
-        db.commit()
-        logger.debug('Inserted into karmadb {} karma for {}'.format(karma, name))
-        db.close()
-        return karma
+        try:
+            cursor.execute(
+                '''
+                UPDATE people SET karma = {0} WHERE name = '{1}'
+                '''.format(karma,name))
+            db.commit()
+            logger.debug('Inserted into karmadb {} karma for {}'.format(karma, name))
+            return karma
+
+        except Exception as e:
+            logger.error('Execution failed with error: {}'.format(e))
+            raise
+    db.close()
 
 def karma_sub(name):
     karma = karma_ask(name)
     db = db_connect()
     cursor = db.cursor()
     if karma is None:
-        cursor.execute(
-            '''
-            INSERT INTO people(name,karma,shame) VALUES('{}',-1,0)
-            '''.format(name))
-        db.commit()
-        logger.debug('Inserted into karmadb -1 karma for {}'.format(name))
-        db.close()
-        return -1
+        try:
+            cursor.execute(
+                '''
+                INSERT INTO people(name,karma,shame) VALUES('{}',-1,0)
+                '''.format(name))
+            db.commit()
+            logger.debug('Inserted into karmadb -1 karma for {}'.format(name))
+            db.close()
+            return -1
+
+        except Exception as e:
+            logger.error('Execution failed with error: {}'.format(e))
+            raise
     else:
         karma = karma - 1
-        cursor.execute(
-            '''
-            UPDATE people SET karma = {0} WHERE name = '{1}'
-            '''.format(karma,name))
-        db.commit()
-        logger.debug('Inserted into karmadb {} karma for {}'.format(karma, name))
-        db.close()
-        return karma
+        try:
+            cursor.execute(
+                '''
+                UPDATE people SET karma = {0} WHERE name = '{1}'
+                '''.format(karma,name))
+            db.commit()
+            logger.debug('Inserted into karmadb -1 karma for {}'.format(name))
+            db.close()
+            return karma
+        except Exception as e:
+            logger.error('Execution failed with error: {}'.format(e))
+            raise
 
 def karma_top():
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute(
-    ''' SELECT name, karma FROM people ORDER BY karma DESC LIMIT 5 '''
-    )
-    leaders = cursor.fetchall()
-    logger.debug('fetched top karma values')
-    return leaders
+    try:
+        cursor.execute(
+        ''' SELECT name, karma FROM people ORDER BY karma DESC LIMIT 5 '''
+        )
+        leaders = cursor.fetchall()
+        logger.debug('fetched top karma values')
+        db.close()
+        return leaders
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
+
 
 def karma_bottom():
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute(
-    ''' SELECT name, karma FROM people ORDER BY karma ASC LIMIT 5 '''
-    )
-    leaders = cursor.fetchall()
-    logger.debug('fetched bottom karma values')
-    return leaders
+    try:
+        cursor.execute(
+        ''' SELECT name, karma FROM people ORDER BY karma ASC LIMIT 5 '''
+        )
+        leaders = cursor.fetchall()
+        logger.debug('fetched bottom karma values')
+        db.close()
+        return leaders
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
+
 
 ## Shame functions
 
 def shame_ask(name):
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute('''
-        SELECT shame FROM people WHERE name='{}'
-        '''.format(name))
-    shame = cursor.fetchone()
-    db.close()
-    if shame is None:
-        logger.debug('No shame found for name {}'.format(name))
-        return shame
-    else:
-        shame = shame[0]
-        logger.debug('shame of {} found for name {}'.format(shame, name))
-        return shame
+    try:
+        cursor.execute('''
+            SELECT shame FROM people WHERE name='{}'
+            '''.format(name))
+        shame = cursor.fetchone()
+        db.close()
+        if shame is None:
+            logger.debug('No shame found for name {}'.format(name))
+            return shame
+        else:
+            shame = shame[0]
+            logger.debug('shame of {} found for name {}'.format(shame, name))
+            return shame
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
+
 
 def shame_add(name):
     shame = shame_ask(name)
     db = db_connect()
     cursor = db.cursor()
     if shame is None:
-        cursor.execute(
-            '''
-            INSERT INTO people(name,karma,shame) VALUES('{}',0,1)
-            '''.format(name))
-        db.commit()
-        logger.debug('Inserted into karmadb 1 shame for {}'.format(name))
-        db.close()
-        return 1
+        try:
+            cursor.execute(
+                '''
+                INSERT INTO people(name,karma,shame) VALUES('{}',0,1)
+                '''.format(name))
+            db.commit()
+            logger.debug('Inserted into karmadb 1 shame for {}'.format(name))
+            db.close()
+            return 1
+        except Exception as e:
+            logger.error('Execution failed with error: {}'.format(e))
+            raise
+
     else:
         shame = shame + 1
-        cursor.execute(
-            '''
-            UPDATE people SET shame = {0} WHERE name = '{1}'
-            '''.format(shame,name))
-        db.commit()
-        logger.debug('Inserted into karmadb {} shame for {}'.format(shame, name))
-        db.close()
-        return shame
+        try:
+            cursor.execute(
+                '''
+                UPDATE people SET shame = {0} WHERE name = '{1}'
+                '''.format(shame,name))
+            db.commit()
+            logger.debug('Inserted into karmadb {} shame for {}'.format(shame, name))
+            db.close()
+            return shame
+        except Exception as e:
+            logger.error('Execution failed with error: {}'.format(e))
+            raise
 
 
 def shame_top():
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute(
-    ''' SELECT name, shame FROM people ORDER BY shame DESC LIMIT 5 '''
-    )
-    leaders = cursor.fetchall()
-    logger.debug('fetched top shame values')
-    return leaders
+    try:
+        cursor.execute(
+            ''' SELECT name, shame FROM people ORDER BY shame DESC LIMIT 5 '''
+            )
+        leaders = cursor.fetchall()
+        logger.debug('fetched top shame values')
+        return leaders
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
+
 
 
 # WIP add quotes somewhere in here
@@ -261,27 +328,39 @@ def shame_top():
 def also_add(name, also):
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute('''
-        INSERT INTO isalso(name,also) VALUES('{}','{}')
-        '''.format(name, also))
-    db.commit()
-    logger.debug('added to isalso name {} with value {}'.format(name,also))
-    db.close()
+    try:
+        cursor.execute('''
+            INSERT INTO isalso(name,also) VALUES('{}','{}')
+            '''.format(name, also))
+        db.commit()
+        logger.debug('added to isalso name {} with value {}'.format(name,also))
+        db.close()
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise
 
 
 
 def also_ask(name):
     db = db_connect()
     cursor = db.cursor()
-    cursor.execute('''
-        SELECT also FROM isalso WHERE name='{}' ORDER BY RANDOM() LIMIT 1
-        '''.format(name))
-    also = cursor.fetchone()
-    db.close()
-    if also is None:
-        logger.debug('could not find is_also for name {}'.format(name))
-        return also
+    if env.name == None:
+        r = 'RANDOM()'
     else:
-        also = also[0]
-        logger.debug('found is_also {} for name {}'.format(also, name))
-        return also
+        r = 'RAND()'
+    try:
+        cursor.execute('''
+            SELECT also FROM isalso WHERE name='{0}' ORDER BY {1} LIMIT 1
+            '''.format(name, r))
+        also = cursor.fetchone()
+        db.close()
+        if also is None:
+            logger.debug('could not find is_also for name {}'.format(name))
+            return also
+        else:
+            also = also[0]
+            logger.debug('found is_also {} for name {}'.format(also, name))
+            return also
+    except Exception as e:
+        logger.error('Execution failed with error: {}'.format(e))
+        raise

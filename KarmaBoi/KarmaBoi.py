@@ -35,6 +35,9 @@ env = AppEnv()
 parser = argparse.ArgumentParser()
 parser.add_argument('-v', '--verbose',
     help='add debug messages to log output', action='store_true')
+parser.add_argument('--first',
+    help='Initial DB and create tables for the first time',
+    action='store_true')
 args = parser.parse_args()
 
 # set up log setting
@@ -42,7 +45,6 @@ if args.verbose:
     logLevel = logging.DEBUG
 else:
     logLevel = logging.INFO
-
 
 '''
 Setting environment specific logger settings - log to file if not using CF
@@ -60,6 +62,13 @@ logging.basicConfig(level=logLevel, handlers=[envHandler],
 
 logger = logging.getLogger(__name__)
 
+
+# Is this the first time starting KarmaBoi?
+
+if args.first:
+    logger.info('--first option was passed - creating tables for DB')
+    dbopts.create_also_table()
+    dbopts.create_karma_table()
 
 
 '''
@@ -98,11 +107,28 @@ def webMain():
 
 def botMain():
 
-    if dbopts.db_connect():
-        logger.info('DB connection successful, continuing')
-    else:
-        logger.error('DB connection not successful, exiting')
+    try:
+        logger.info('Checking DB connection...')
+        db = dbopts.db_connect()
+        db.close()
+        if env.name != None:
+            try:
+                dbopts.check_tables()
+            except Exception as e:
+                if e.errno == 1146:
+                    logger.warning('tables may not exist, attempting to create them now')
+                    dbopts.create_karma_table()
+                    dbopts.create_also_table()
+                else:
+                    logger.exception('unknown error, exiting')
+
+    except Exception as e:
+        logger.critical('DB connection not successful, exiting')
+        logger.exception('Failed on:')
         exit(1)
+
+    logger.info('DB connection successful')
+
     # connect to channel and do things
     attempt = 0
     MAX_ATTEMPTS = 500
