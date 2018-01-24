@@ -10,6 +10,7 @@ Jinja2==2.10
 MarkupSafe==1.0
 mysql-connector-python==8.0.5
 orderedmultidict==0.7.11
+psycopg2==2.7.3.2
 requests==2.18.4
 six==1.11.0
 slackclient==1.1.0

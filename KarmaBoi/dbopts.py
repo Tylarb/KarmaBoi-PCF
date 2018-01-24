@@ -2,8 +2,10 @@ import sqlite3
 import os
 import logging
 from cfenv import AppEnv
-import mysql.connector
-from mysql.connector import errorcode
+import psycopg2
+
+#import mysql.connector
+#from mysql.connector import errorcode
 
 
 DB_NAME = 'karmadb'
@@ -30,24 +32,25 @@ if env.name == None:
     '''
 else:
     try:
-        mysql_env = env.get_service(label='p.mysql')
-        mysql_creds = mysql_env.credentials
-        mysql_config = {
-            'user': mysql_creds.get('username'),
-            'password': mysql_creds.get('password'),
-            'host': mysql_creds.get('hostname'),
-            'port': mysql_creds.get('port'),
-            'database': mysql_creds.get('name')
+        db_env = env.get_service(label='elephantsql') # probably can bind any db by adjusting lable
+        db_creds = db_env.credentials
+        db_config = {
+            'user': db_creds.get('username'),
+            'password': db_creds.get('password'),
+            'host': db_creds.get('hostname'),
+            'port': db_creds.get('port'),
+            'database': db_creds.get('name')
             }
+        db_uri = db_creds.get('uri')
     except:
-        logger.critical('not able to generate mysql_env - ensure mysql is bound and lable is correct')
+        logger.critical('not able to generate db_env - ensure db is bound and lable is correct')
         raise
     PEOPLE_TABLE = '''
-    CREATE TABLE IF NOT EXISTS people(id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    CREATE TABLE IF NOT EXISTS people(id SERIAL PRIMARY KEY,
     name TEXT, karma INTEGER, shame INTEGER)
-    '''
+    ''' # currently, specific to postgres
     ALSO_TABLE = '''
-    CREATE TABLE IF NOT EXISTS isalso(id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    CREATE TABLE IF NOT EXISTS isalso(id SERIAL PRIMARY KEY,
     name TEXT, also TEXT)
     '''
 
@@ -72,11 +75,13 @@ def db_connect():
                 raise
     else:
         try:
-            logger.debug('Detected Cloud Foundry, connecting to msql')
-            cnx = mysql.connector.connect(**mysql_config)
+            logger.debug('Detected Cloud Foundry, connecting to db service')
+            logger.debug('db_config: {}'.format(db_config))
+            logger.debug('db_uri: {}'.format(db_uri))
+            cnx = psycopg2.connect(db_uri)
             return cnx
-        except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        except Exception as e:
+            if e.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 logger.error('Username or password is incorrect')
                 raise Exception('Could not connect, bad user or pwd')
             else:
@@ -84,11 +89,12 @@ def db_connect():
 
 def check_tables():
     db = db_connect()
-    cursor = db.cursor(buffered=True)
+    cursor = db.cursor()
     try:
         cursor.execute('''
             SELECT 1 FROM people LIMIT 1;
             ''')
+        cursor.fetchone()
         logger.debug('people table exists')
     except:
         raise
@@ -96,10 +102,10 @@ def check_tables():
         cursor.execute('''
             SELECT 1 FROM people LIMIT 1;
             ''')
+        cursor.fetchone()
         logger.debug('people table exists')
     except:
         raise
-    cursor.fetchall()
 
 
 def create_karma_table():
@@ -348,7 +354,7 @@ def also_ask(name):
     if env.name == None:
         r = 'RANDOM()'
     else:
-        r = 'RAND()'
+        r = 'RANDOM()'
     try:
         cursor.execute('''
             SELECT also FROM isalso WHERE name='{0}' ORDER BY {1} LIMIT 1

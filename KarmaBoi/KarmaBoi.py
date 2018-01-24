@@ -113,14 +113,16 @@ def botMain():
         db.close()
         if env.name != None:
             try:
+                logger.debug('connection appears successful, checking tables')
                 dbopts.check_tables()
             except Exception as e:
-                if e.errno == 1146:
+                try:
                     logger.warning('tables may not exist, attempting to create them now')
+                    logger.warning('Exceptoin: {}'.format(e))
                     dbopts.create_karma_table()
                     dbopts.create_also_table()
-                else:
-                    logger.exception('unknown error, exiting')
+                except:
+                    logger.exception('Could not create tables: ')
 
     except Exception as e:
         logger.critical('DB connection not successful, exiting')
