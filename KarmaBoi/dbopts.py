@@ -24,10 +24,10 @@ if env.name == None:
     DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
     DB_NAME = 'karmadb'
     PEOPLE_TABLE = '''
-    CREATE TABLE IF NOT EXISTS people(id INT PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS people(id SERIAL PRIMARY KEY,
     name TEXT, karma INTEGER, shame INTEGER)'''
     ALSO_TABLE = '''
-    CREATE TABLE IF NOT EXISTS isalso(id INT PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS isalso(id SERIAL PRIMARY KEY,
     name TEXT, also TEXT)
     '''
 else:
