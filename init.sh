@@ -1,5 +1,13 @@
 #!/bin/bash 
 
+# Creates an approproriate environment for the bot to run. Please 
+# ensure you set create a bot token file in $BOT_HOME 
+# 
+#
+# Released under MIT license, copyright 2018 Tyler Ramer
+
+
+
 DIR=`pwd`
 export BOT_HOME=~/.KarmaBoi
 

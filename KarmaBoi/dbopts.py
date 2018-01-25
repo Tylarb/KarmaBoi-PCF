@@ -1,3 +1,11 @@
+'''
+All DB operations, including connection to the appropriate DB, are handled here.
+
+Released under MIT license, copyright 2018 Tyler Ramer
+'''
+
+
+
 import sqlite3
 import os
 import logging

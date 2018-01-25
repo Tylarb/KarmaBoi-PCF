@@ -1,3 +1,10 @@
+'''
+Creates a cache with timekeeping in order to prevent vote spam
+
+Released under MIT license, copyright 2018 Tyler Ramer
+'''
+
+
 import logging
 import time
 

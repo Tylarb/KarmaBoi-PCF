@@ -3,6 +3,12 @@
 # This script will migrate schema and data from a SQLite3 database to PostgreSQL.
 # Schema translation based on http://stackoverflow.com/a/4581921/1303625.
 # Some column types are not handled (e.g blobs).
+#
+# Originally created by Earle Clubb, https://gist.github.com/eclubb/2253099
+# https://github.com/eclubb
+
+
+
 
 SQLITE_DB_PATH=$1
 PG_DB_NAME=$2

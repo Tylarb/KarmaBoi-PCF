@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+'''
+Main application - sets and receives environment variables, initial logger
+configuration.
+
+In order to work with Cloud Foundry healthcheck, threadding is imported to
+create a simple flask instance. The slack client is persistent, and all
+exceptions will be logged but the slack client will restart.
+
+Released under MIT license, copyright 2018 Tyler Ramer
+'''
+
 import dbopts
 import os, sys, traceback
 import time
@@ -140,7 +151,7 @@ def botMain():
     attempts later.
     Probably should always attempt to recover after broken pipe (or, recover
     so many times wthin some time period), but stop general errors after a
-    number of attempts. Need to collect logs on what is causing failures first
+    number of attempts.
     '''
     while True:
         sc = SlackClient(SLACK_BOT_TOKEN)

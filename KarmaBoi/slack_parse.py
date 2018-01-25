@@ -1,3 +1,12 @@
+'''
+Main language parsing operations. Handles all interaction with slack after
+valid slack client has been passed.
+
+Released under MIT license, copyright 2018 Tyler Ramer
+'''
+
+
+
 import re
 import dbopts
 import logging
