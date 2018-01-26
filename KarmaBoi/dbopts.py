@@ -19,7 +19,7 @@ import psycopg2
 DB_NAME = 'karmadb'
 env = AppEnv()
 logger = logging.getLogger(__name__)
-
+SERVICE_LABLE = 'elephantsql'
 
 
 '''
@@ -40,7 +40,7 @@ if env.name == None:
     '''
 else:
     try:
-        db_env = env.get_service(label='elephantsql') # probably can bind any db by adjusting lable
+        db_env = env.get_service(label=SERVICE_LABLE) # probably can bind any db by adjusting lable
         db_creds = db_env.credentials
         db_config = {
             'user': db_creds.get('username'),
