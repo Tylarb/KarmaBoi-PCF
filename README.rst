@@ -47,26 +47,47 @@ Basic Usage
 
 You can give any user or name karma by adding '++' to the end of the word:
 
+.. image:: 
+    screenshots/karmaup.png
+    :width: 100%
 
 Subtracting karma is just as simple - simply add '--':
 
-The bot uses user IDs, so if a user's display name changes, their karma will remain:
+.. image:: 
+    screenshots/karmadown.png
+    :width: 100%
+
+The bot uses user IDs, so if a user's display name changes, their karma will remain.
 
 There's a timer to prevent vote spam - karma can't be added or subtracked during this time:
 
+.. image:: 
+    screenshots/timer.png
+    :width: 100%
+
 You can also give name shame. Be intentional - shame cannot be decreased, it stays for the life of the user!
 
+.. image:: 
+    screenshots/shame.png
+    :width: 100%
 
 You can see full leaderboards by messaging the bot and give it one of the following commands: rank (for highest karma leaderboard), !rank (for lowest karma leaderboard), or ~rank (for shame leaderboard):
 
+.. image:: 
+    screenshots/rank.png
+    :width: 100%
 
 The bot also has a memory feature - you can tag any word using the keyword "is also":
 
-and display what is remembered with the keyword + ?:
+.. image:: 
+    screenshots/memoryset.png
+    :width: 100%
 
-If a keyword has multiple inputs, the bot will choose a random one to display:
+and display what is remembered with the "keyword + ?". If a keyword has multiple inputs, the bot will choose a random one to display:
 
-
+.. image:: 
+    screenshots/memoryask.png
+    :width: 100%
 
 
 Additional information
