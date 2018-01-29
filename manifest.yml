@@ -2,4 +2,4 @@
 applications:
         - name: KarmaBoi
           buildpack: python_buildpack
-          command: 'python KarmaBoi/KarmaBoi.py -v'
+          command: 'python KarmaBoi/KarmaBoi.py'
