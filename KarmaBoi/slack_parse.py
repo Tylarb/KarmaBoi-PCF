@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def triage(sc, BOT_ID, kcache):
     """
-        Here, we read and triage all messages. Messages directed to the bot will
+        We read and triage all messages. Messages directed to the bot will
         be triaged to the command handler. Otherwise, the output is parsed for
         special events
     """
@@ -24,9 +24,7 @@ def triage(sc, BOT_ID, kcache):
     # special events - Karma up or down, or @bot; add
     AT_BOT = '<@' + BOT_ID + '>'
     question = re.compile('.+\?{1,1}$')
-    weblink = re.compile(
-        '^<http.+>$'
-    )  # needed because slack doesn't handle web links printed with <> for some reason
+    weblink = re.compile('^<http.+>$')  # slack doesn't handle <link>
 
     for slack_message in sc.rtm_read():
         text = slack_message.get('text')
@@ -40,8 +38,6 @@ def triage(sc, BOT_ID, kcache):
             continue
         # Need to add users to ignore here - if user in "ignore list"....
         text_list = text.split()
-        # Uncomment this for explicit message debugging
-        # logger.debug('Channel: {} user: {} message: {}'.format(channel, user, text))
         if text_list[0] == AT_BOT and len(text_list) > 1:
             logger.debug('Message directed at bot: {}'.format(text))
             handle_command(sc, text_list, channel)
@@ -59,7 +55,7 @@ def triage(sc, BOT_ID, kcache):
                         word, also))
             continue
 
-        else:  ## karma and shame here
+        else:  # karma and shame here
             for word in list(set(text_list)):
                 if handle_word(sc, word, kcache, user, channel):
                     continue
@@ -184,7 +180,7 @@ def handle_command(sc, text_list, channel):
     # person rankings - karma and shame
     if len(text_list) > 2 and text_list[1] == 'rank':
         name = text_list[2]
-        new_name = get_uid(sc, name.strip('@'))  #WIP
+        new_name = get_uid(sc, name.strip('@'))  # WIP
         karma = dbopts.karma_ask(name)
         if karma:
             rank = dbopts.karma_rank(name)

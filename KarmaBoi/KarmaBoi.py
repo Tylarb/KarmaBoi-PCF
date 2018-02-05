@@ -11,7 +11,9 @@ Released under MIT license, copyright 2018 Tyler Ramer
 '''
 
 import dbopts
-import os, sys, traceback
+import os
+import traceback
+import sys
 import time
 import slack_parse
 import logging
@@ -54,7 +56,7 @@ else:
 '''
 Setting environment specific logger settings - log to file if not using CF
 '''
-if env.name == None:
+if env.name is None:
     BOT_HOME = os.environ.get('BOT_HOME')
     envHandler = logging.FileHandler("{}/{}.log".format(BOT_HOME, 'KarmaBoi'))
 else:
@@ -115,7 +117,7 @@ def botMain():
         logger.info('Checking DB connection...')
         db = dbopts.db_connect()
         db.close()
-        if env.name != None:
+        if env.name is not None:
             try:
                 logger.debug('connection appears successful, checking tables')
                 dbopts.check_tables()
@@ -126,7 +128,7 @@ def botMain():
                     logger.warning('Exceptoin: {}'.format(e))
                     dbopts.create_karma_table()
                     dbopts.create_also_table()
-                except:
+                except Exception as e:
                     logger.exception('Could not create tables: ')
 
     except Exception as e:
