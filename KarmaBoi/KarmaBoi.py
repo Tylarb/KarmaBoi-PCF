@@ -73,7 +73,6 @@ logger = logging.getLogger(__name__)
 
 if args.first:
     logger.info('--first option was passed - creating tables for DB')
-    dbopts.create_also_table()
     dbopts.create_karma_table()
 '''
 Using flask as a simple server - provides a quick status check, and, more
