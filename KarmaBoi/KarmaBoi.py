@@ -42,10 +42,6 @@ parser.add_argument(
     '--verbose',
     help='add debug messages to log output',
     action='store_true')
-parser.add_argument(
-    '--first',
-    help='Initial DB and create tables for the first time',
-    action='store_true')
 args = parser.parse_args()
 
 # set up log setting
@@ -68,12 +64,6 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 
 logger = logging.getLogger(__name__)
-
-# Is this the first time starting KarmaBoi?
-
-if args.first:
-    logger.info('--first option was passed - creating tables for DB')
-    dbopts.create_karma_table()
 '''
 Using flask as a simple server - provides a quick status check, and, more
 importantly, allows it to work on Cloud Foundry by providing socket listening
