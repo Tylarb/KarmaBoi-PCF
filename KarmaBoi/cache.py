@@ -4,11 +4,11 @@ Creates a cache with timekeeping in order to prevent vote spam
 Released under MIT license, copyright 2018 Tyler Ramer
 '''
 
-
 import logging
 import time
 
 logger = logging.getLogger(__name__)
+
 
 class TimedCache:
     """
@@ -18,7 +18,6 @@ class TimedCache:
     This functionality is easily provided by Gemfire and may be moved to that
     service at some point...
     """
-
 
     VOTE_DELAY = 300
 
@@ -41,7 +40,8 @@ class TimedCache:
         self.clean()
         if key not in self.cache and len(self.cache) < self.max_cache_size:
             self.cache[key] = {'time_added': time.time()}
-            logger.debug('added to cache {} at time {}'.format(key, time.time()))
+            logger.debug('added to cache {} at time {}'.format(
+                key, time.time()))
 
         elif key not in self.cache and len(self.cache) >= self.max_cache_size:
             logger.warning('cache is full - dropping oldest entry')
@@ -62,7 +62,6 @@ class TimedCache:
             self.cache.pop(key)
             logger.debug('Dropped {} from cache'.format(key))
 
-
     def remove_old(self):
         """
         This should not generally be used - only occurs if we're actually
@@ -74,7 +73,7 @@ class TimedCache:
             if oldest is None:
                 oldest = key
             elif (self.cache[key]['time_added'] <
-                self.cache[oldest]['time_added']):
+                  self.cache[oldest]['time_added']):
                 oldest = key
         self.cache.pop(oldest)
 
