@@ -14,6 +14,7 @@ import textwrap as tw
 logger = logging.getLogger(__name__)
 BASE_URL = "http://example.com/"
 
+
 def triage(sc, BOT_ID, kcache):
     """
         We read and triage all messages. Messages directed to the bot will
@@ -69,7 +70,6 @@ def handle_word(sc, word, kcache, user, channel):
     nonkarma = re.compile('^\W+$')
     caseid = re.compile('^[0-9]{5,5}$')  # URL expander for cases
 
-
     if karmaup.search(word):
         name = word.rstrip(
             '+')  # can use "get UID" at this point if desired later
@@ -111,7 +111,7 @@ def handle_word(sc, word, kcache, user, channel):
                     '{} seconds remaining to adjust karma for {}'.format(
                         t_remain, key))
 
-    if karmadown.search(word):
+    if karmadown.search(word) or karmadownlong(word):
         name = word.rstrip('-')
         if name == '' or nonkarma.search(name):
             logger.debug('Ignored word {}'.format(name))
@@ -285,12 +285,13 @@ def handle_command(sc, text_list, channel):
 # currently unused
 def get_prize(karma):
     prize = None
-    if karma % 5000 is 0:
-        prize = dbopts.also_ask("superprize")
-    elif karma % 1000 is 0:
-        prize = dbopts.also_ask("grandprize")
-    elif karma % 100 is 0:
-        prize = dbopts.also_ask("prize")
+    if karma > 0:
+        if karma % 5000 is 0:
+            prize = dbopts.also_ask("superprize")
+        elif karma % 1000 is 0:
+            prize = dbopts.also_ask("grandprize")
+        elif karma % 100 is 0:
+            prize = dbopts.also_ask("prize")
     return prize
 
 
