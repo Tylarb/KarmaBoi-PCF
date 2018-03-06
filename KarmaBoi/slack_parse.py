@@ -111,7 +111,7 @@ def handle_word(sc, word, kcache, user, channel):
                     '{} seconds remaining to adjust karma for {}'.format(
                         t_remain, key))
 
-    if karmadown.search(word) or karmadownlong(word):
+    if karmadown.search(word):
         name = word.rstrip('-')
         if name == '' or nonkarma.search(name):
             logger.debug('Ignored word {}'.format(name))
