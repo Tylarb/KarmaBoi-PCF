@@ -12,7 +12,7 @@ import time
 import textwrap as tw
 
 logger = logging.getLogger(__name__)
-
+BASE_URL = "http://example.com/"
 
 def triage(sc, BOT_ID, kcache):
     """
@@ -68,7 +68,7 @@ def handle_word(sc, word, kcache, user, channel):
     shameup = re.compile('.+~{2,2}$')
     nonkarma = re.compile('^\W+$')
     caseid = re.compile('^[0-9]{5,5}$')  # URL expander for cases
-    baseUrl = "http://example.com/"
+
 
     if karmaup.search(word):
         name = word.rstrip(
@@ -181,8 +181,8 @@ def handle_word(sc, word, kcache, user, channel):
             logger.debug('{} seconds remaining to add shame for {}'.format(
                 t_remain, key))
     if caseid.search(word):
-        urlExpanded = baseUrl + word
-        sc.rtm_send_message(urlExpanded)
+        urlExpanded = BASE_URL + word
+        sc.rtm_send_message(channel, urlExpanded)
 
 
 def handle_command(sc, text_list, channel):
