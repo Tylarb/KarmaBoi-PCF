@@ -10,8 +10,6 @@ import logging
 from cfenv import AppEnv
 import psycopg2
 
-#import mysql.connector
-#from mysql.connector import errorcode
 
 DB_NAME = 'karmadb'
 env = AppEnv()
@@ -23,7 +21,7 @@ use sqlite to build our database. Fortunately, command execution libraries
 are identical once we have a cursor.
 '''
 
-if env.name == None:
+if env.name is None:
     DB_PATH = os.path.expanduser("~/.KarmaBoi/databases/")
     DB_NAME = 'karmadb'
     PEOPLE_TABLE = '''
@@ -46,15 +44,16 @@ else:
             'database': db_creds.get('name')
         }
         db_uri = db_creds.get('uri')
-    except:
+    except Exception as e:
         logger.critical(
             'not able to generate db_env - ensure db is bound and lable is correct'
         )
+        logger.exception(e)
         raise
     PEOPLE_TABLE = '''
     CREATE TABLE IF NOT EXISTS people(id SERIAL PRIMARY KEY,
     name TEXT, karma INTEGER, shame INTEGER)
-    ''' # currently, specific to postgres
+    '''  # currently, specific to postgres
     ALSO_TABLE = '''
     CREATE TABLE IF NOT EXISTS isalso(id SERIAL PRIMARY KEY,
     name TEXT, also TEXT)
@@ -84,7 +83,7 @@ class db_connect:
 
 
 def db_connect():
-    if env.name == None:
+    if env.name is None:
         logger.debug('Local install, attempting to connect to sqlite DB')
         if not os.path.exists(DB_PATH + 'karmadb'):
             logger.info(
@@ -129,7 +128,8 @@ def check_tables():
             ''')
         cursor.fetchone()
         logger.debug('people table exists')
-    except:
+    except Exception as e:
+        logger.exception(e)
         raise
     try:
         cursor.execute('''
@@ -137,7 +137,8 @@ def check_tables():
             ''')
         cursor.fetchone()
         logger.debug('people table exists')
-    except:
+    except Exception as e:
+        logger.exception(e)
         raise
 
 
@@ -157,13 +158,13 @@ def create_also_table():
     logger.info('successfully created also table for the first time')
 
 
-## Karma functions
+#  Karma functions
 def karma_ask(name):
     db = db_connect()
     cursor = db.cursor()
     try:
-        cursor.execute(
-            ''' SELECT karma FROM people WHERE name='{}' '''.format(name))
+        cursor.execute(''' SELECT karma FROM people WHERE name=%(name)s ''',
+                       (name, ))
         karma = cursor.fetchone()
         if karma is None:
             logger.debug('No karma found for name {}'.format(name))
@@ -185,8 +186,8 @@ def karma_rank(name):
     try:
         cursor.execute('''
             SELECT (SELECT COUNT(*) FROM people AS t2 WHERE t2.karma > t1.karma)
-            AS row_Num FROM people AS t1 WHERE name='{}'
-        '''.format(name))
+            AS row_Num FROM people AS t1 WHERE name=%(name)s
+        ''', (name, ))
         rank = cursor.fetchone()[0] + 1
         logger.debug('Rank of {} found for name {}'.format(rank, name))
         db.close()
@@ -203,8 +204,8 @@ def karma_add(name):
     if karma is None:
         try:
             cursor.execute('''
-                INSERT INTO people(name,karma,shame) VALUES('{}',1,0)
-                '''.format(name))
+                INSERT INTO people(name,karma,shame) VALUES(%(name)s,1,0)
+                ''', name)
             db.commit()
             logger.debug('Inserted into karmadb 1 karma for {}'.format(name))
             return 1
@@ -215,11 +216,13 @@ def karma_add(name):
         karma = karma + 1
         try:
             cursor.execute('''
-                UPDATE people SET karma = {0} WHERE name = '{1}'
-                '''.format(karma, name))
+                UPDATE people SET karma = %(karma)s WHERE name = %(name)s
+                ''', (karma, name))
             db.commit()
             logger.debug('Inserted into karmadb {} karma for {}'.format(
-                karma, name))
+                karma,
+                name,
+            ))
             return karma
 
         except Exception as e:
@@ -235,8 +238,8 @@ def karma_sub(name):
     if karma is None:
         try:
             cursor.execute('''
-                INSERT INTO people(name,karma,shame) VALUES('{}',-1,0)
-                '''.format(name))
+                INSERT INTO people(name,karma,shame) VALUES(%(name)s,-1,0)
+                ''', (name, ))
             db.commit()
             logger.debug('Inserted into karmadb -1 karma for {}'.format(name))
             db.close()
@@ -249,8 +252,11 @@ def karma_sub(name):
         karma = karma - 1
         try:
             cursor.execute('''
-                UPDATE people SET karma = {0} WHERE name = '{1}'
-                '''.format(karma, name))
+                UPDATE people SET karma = %(karma)s WHERE name = %(name)s
+                ''', (
+                karma,
+                name,
+            ))
             db.commit()
             logger.debug('Inserted into karmadb -1 karma for {}'.format(name))
             db.close()
@@ -290,7 +296,7 @@ def karma_bottom():
         raise
 
 
-## Shame functions
+# Shame functions
 
 
 def shame_ask(name):
@@ -298,8 +304,8 @@ def shame_ask(name):
     cursor = db.cursor()
     try:
         cursor.execute('''
-            SELECT shame FROM people WHERE name='{}'
-            '''.format(name))
+            SELECT shame FROM people WHERE name=%(name)s
+            ''', (name, ))
         shame = cursor.fetchone()
         db.close()
         if shame is None:
@@ -321,8 +327,8 @@ def shame_add(name):
     if shame is None:
         try:
             cursor.execute('''
-                INSERT INTO people(name,karma,shame) VALUES('{}',0,1)
-                '''.format(name))
+                INSERT INTO people(name,karma,shame) VALUES(%(name)s,0,1)
+                ''', (name, ))
             db.commit()
             logger.debug('Inserted into karmadb 1 shame for {}'.format(name))
             db.close()
@@ -335,8 +341,11 @@ def shame_add(name):
         shame = shame + 1
         try:
             cursor.execute('''
-                UPDATE people SET shame = {0} WHERE name = '{1}'
-                '''.format(shame, name))
+                UPDATE people SET shame = %(karma)s WHERE name = %(name)s
+                ''' (
+                shame,
+                name,
+            ))
             db.commit()
             logger.debug('Inserted into karmadb {} shame for {}'.format(
                 shame, name))
@@ -370,8 +379,11 @@ def also_add(name, also):
     cursor = db.cursor()
     try:
         cursor.execute('''
-            INSERT INTO isalso(name,also) VALUES('{}','{}')
-            '''.format(name, also))
+            INSERT INTO isalso(name,also) VALUES(%(name)s,%(also)s)
+            ''', (
+            name,
+            also,
+        ))
         db.commit()
         logger.debug('added to isalso name {} with value {}'.format(
             name, also))
@@ -384,14 +396,14 @@ def also_add(name, also):
 def also_ask(name):
     db = db_connect()
     cursor = db.cursor()
-    if env.name == None:
+    if env.name is None:
         r = 'RANDOM()'
     else:
         r = 'RANDOM()'
     try:
         cursor.execute('''
-            SELECT also FROM isalso WHERE name='{0}' ORDER BY {1} LIMIT 1
-            '''.format(name, r))
+            SELECT also FROM isalso WHERE name= %(name)r ORDER BY {} LIMIT 1
+            '''.format(r), (name, ))
         also = cursor.fetchone()
         db.close()
         if also is None:
