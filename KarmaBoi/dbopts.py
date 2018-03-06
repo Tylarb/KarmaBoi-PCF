@@ -59,6 +59,28 @@ else:
     CREATE TABLE IF NOT EXISTS isalso(id SERIAL PRIMARY KEY,
     name TEXT, also TEXT)
     '''
+'''
+Possible db connect class
+class db_connect:
+    def __init__(self):
+        try:
+            logger.debug('Connecting to db service')
+            self.cnx = psycopg2.connect(db_uri)
+            return self.cnx
+        except Exception as e:
+            if e.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                logger.error('Username or password is incorrect')
+                raise Exception('Could not connect, bad user or pwd')
+            else:
+                logger.error(
+                    'Could not connect to DB for some other reason: {}'.format(
+                        err))
+
+    def __exit__(self):
+        cnx.close()
+
+
+'''
 
 
 def db_connect():

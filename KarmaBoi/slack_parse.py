@@ -67,6 +67,8 @@ def handle_word(sc, word, kcache, user, channel):
     karmadown = re.compile('.+-{2,2}$')
     shameup = re.compile('.+~{2,2}$')
     nonkarma = re.compile('^\W+$')
+    caseid = re.compile('^[0-9]{5,5}$')  # URL expander for cases
+    baseUrl = "http://example.com/"
 
     if karmaup.search(word):
         name = word.rstrip(
@@ -91,6 +93,8 @@ def handle_word(sc, word, kcache, user, channel):
                 sc.rtm_send_message(channel,
                                     '{} now has {} points of karma'.format(
                                         name, karma))
+                if get_prize(karma) is not None:
+                    sc.rtm_send_message(channel, get_prize(karma))
             else:
                 t_remain = kcache.timeout - (
                     time.time() - kcache.cache[key]['time_added'])
@@ -124,6 +128,9 @@ def handle_word(sc, word, kcache, user, channel):
             sc.rtm_send_message(channel,
                                 '{} now has {} points of karma'.format(
                                     name, karma))
+            if get_prize(karma) is not None:
+                sc.rtm_send_message(channel, get_prize(karma))
+
         else:
             t_remain = kcache.timeout - (
                 time.time() - kcache.cache[key]['time_added'])
@@ -173,6 +180,9 @@ def handle_word(sc, word, kcache, user, channel):
 
             logger.debug('{} seconds remaining to add shame for {}'.format(
                 t_remain, key))
+    if caseid.search(word):
+        urlExpanded = baseUrl + word
+        sc.rtm_send_message(urlExpanded)
 
 
 def handle_command(sc, text_list, channel):
@@ -187,6 +197,9 @@ def handle_command(sc, text_list, channel):
             sc.rtm_send_message(channel,
                                 '{} is rank {} with {} points of karma'.format(
                                     name, rank, karma))
+            if get_prize(karma) is not None:
+                sc.rtm_send_message(channel, get_prize(karma))
+
         else:
             sc.rtm_send_message(channel,
                                 '{} hasn\'t been given karma yet'.format(name))
@@ -270,6 +283,15 @@ def handle_command(sc, text_list, channel):
 
 
 # currently unused
+def get_prize(karma):
+    prize = None
+    if karma % 5000 is 0:
+        prize = dbopts.also_ask("superprize")
+    elif karma % 1000 is 0:
+        prize = dbopts.also_ask("grandprize")
+    elif karma % 100 is 0:
+        prize = dbopts.also_ask("prize")
+    return prize
 
 
 def get_uid(sc, name):
