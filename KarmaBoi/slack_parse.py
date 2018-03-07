@@ -10,6 +10,7 @@ import dbopts
 import logging
 import time
 import textwrap as tw
+import prizes
 
 logger = logging.getLogger(__name__)
 BASE_URL = "http://example.com/"
@@ -93,8 +94,8 @@ def handle_word(sc, word, kcache, user, channel):
                 sc.rtm_send_message(channel,
                                     '{} now has {} points of karma'.format(
                                         name, karma))
-                if get_prize(karma) is not None:
-                    sc.rtm_send_message(channel, get_prize(karma))
+                if prizes.getPrize(karma) is not None:
+                    sc.rtm_send_message(channel, prizes.getPrize(karma))
             else:
                 t_remain = kcache.timeout - (
                     time.time() - kcache.cache[key]['time_added'])
@@ -128,8 +129,8 @@ def handle_word(sc, word, kcache, user, channel):
             sc.rtm_send_message(channel,
                                 '{} now has {} points of karma'.format(
                                     name, karma))
-            if get_prize(karma) is not None:
-                sc.rtm_send_message(channel, get_prize(karma))
+            if prizes.getPrize(karma) is not None:
+                sc.rtm_send_message(channel, prizes.getPrize(karma))
 
         else:
             t_remain = kcache.timeout - (
@@ -197,8 +198,8 @@ def handle_command(sc, text_list, channel):
             sc.rtm_send_message(channel,
                                 '{} is rank {} with {} points of karma'.format(
                                     name, rank, karma))
-            if get_prize(karma) is not None:
-                sc.rtm_send_message(channel, get_prize(karma))
+            if prizes.getPrize(karma) is not None:
+                sc.rtm_send_message(channel, prizes.getPrize(karma))
 
         else:
             sc.rtm_send_message(channel,
@@ -282,17 +283,6 @@ def handle_command(sc, text_list, channel):
             sc.rtm_send_message(channel, "I'll keep that in mind")
 
 
-# currently unused
-def get_prize(karma):
-    prize = None
-    if karma > 0:
-        if karma % 5000 is 0:
-            prize = dbopts.also_ask("superprize")
-        elif karma % 1000 is 0:
-            prize = dbopts.also_ask("grandprize")
-        elif karma % 100 is 0:
-            prize = dbopts.also_ask("prize")
-    return prize
 
 
 def get_uid(sc, name):
