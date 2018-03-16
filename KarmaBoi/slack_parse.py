@@ -69,7 +69,7 @@ def handle_word(sc, word, kcache, user, channel):
     karmadown = re.compile('.+-{2,2}$')
     shameup = re.compile('.+~{2,2}$')
     nonkarma = re.compile('^\W+$')
-    caseid = re.compile('^[0-9]{5,5}$')  # URL expander for cases
+    caseid = re.compile('^[7-8][0-9]{4,4}$')  # URL expander for cases
 
     if karmaup.search(word):
         name = word.rstrip(
