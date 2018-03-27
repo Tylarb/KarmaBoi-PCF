@@ -96,7 +96,7 @@ def db_connect():
     else:
         try:
             logger.debug('Detected Cloud Foundry, connecting to db service')
-            logger.debug('db_uri: {}'.format(db_uri))
+#            logger.debug('db_uri: {}'.format(db_uri))#  Best to leave this commented out for security
             cnx = psycopg2.connect(db_uri)
             return cnx
         except Exception as e:
