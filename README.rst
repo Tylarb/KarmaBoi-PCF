@@ -95,6 +95,9 @@ Additional information
 
 Submit an issue or for any questions. I welcome contributions via pull requests as well.
 
+Please check out new development of the bot in Golang:
+https://github.com/Tylarb/KarmaBoi-Go
+
 License
 *******
 
