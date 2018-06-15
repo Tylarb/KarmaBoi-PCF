@@ -81,8 +81,9 @@ def handle_word(sc, word, kcache, user, channel):
             logger.debug(
                 'user {} attempted to give personal karma'.format(user))
             shame = dbopts.shame_add(name)
-            sc.rtm_send_message(channel,
-                                tw.dedent('''\
+            sc.rtm_send_message(
+                channel,
+                tw.dedent('''\
                Self promotion will get you nowhere.
                {} now has {} points of shame forever.
                ''').format(name, shame))
@@ -91,9 +92,9 @@ def handle_word(sc, word, kcache, user, channel):
             if key not in kcache:
                 kcache.update(key)
                 karma = dbopts.karma_add(name)
-                sc.rtm_send_message(channel,
-                                    '{} now has {} points of karma'.format(
-                                        name, karma))
+                sc.rtm_send_message(
+                    channel, '{} now has {} points of karma'.format(
+                        name, karma))
                 if prizes.getPrize(karma) is not None:
                     sc.rtm_send_message(channel, prizes.getPrize(karma))
             else:
@@ -118,17 +119,17 @@ def handle_word(sc, word, kcache, user, channel):
             logger.debug('Ignored word {}'.format(name))
             return True
         if name == '<@' + user + '>':
-            sc.rtm_send_message(channel,
-                                tw.dedent('''
+            sc.rtm_send_message(
+                channel,
+                tw.dedent('''
            I still love you, even if you don\'t always love yourself
            '''))
         key = user + '-' + name
         if key not in kcache:
             kcache.update(key)
             karma = dbopts.karma_sub(name)
-            sc.rtm_send_message(channel,
-                                '{} now has {} points of karma'.format(
-                                    name, karma))
+            sc.rtm_send_message(
+                channel, '{} now has {} points of karma'.format(name, karma))
             if prizes.getPrize(karma) is not None:
                 sc.rtm_send_message(channel, prizes.getPrize(karma))
 
@@ -157,15 +158,16 @@ def handle_word(sc, word, kcache, user, channel):
             kcache.update(key)
             shame = dbopts.shame_add(name)
             if shame == 1:
-                sc.rtm_send_message(channel,
-                                    tw.dedent('''
+                sc.rtm_send_message(
+                    channel,
+                    tw.dedent('''
                What is done cannot be undone.
                {} now has shame until the end of time
               ''').format(name))
             else:
-                sc.rtm_send_message(channel,
-                                    '{} now has {} points of shame'.format(
-                                        name, shame))
+                sc.rtm_send_message(
+                    channel, '{} now has {} points of shame'.format(
+                        name, shame))
         else:
             t_remain = kcache.timeout - (
                 time.time() - kcache.cache[key]['time_added'])
@@ -181,9 +183,9 @@ def handle_word(sc, word, kcache, user, channel):
 
             logger.debug('{} seconds remaining to add shame for {}'.format(
                 t_remain, key))
-    if caseid.search(word):
-        urlExpanded = BASE_URL + word
-        sc.rtm_send_message(channel, urlExpanded)
+    #if caseid.search(word):
+    #    urlExpanded = BASE_URL + word
+    #    sc.rtm_send_message(channel, urlExpanded)
 
 
 def handle_command(sc, text_list, channel):
@@ -195,9 +197,9 @@ def handle_command(sc, text_list, channel):
         karma = dbopts.karma_ask(name)
         if karma:
             rank = dbopts.karma_rank(name)
-            sc.rtm_send_message(channel,
-                                '{} is rank {} with {} points of karma'.format(
-                                    name, rank, karma))
+            sc.rtm_send_message(
+                channel, '{} is rank {} with {} points of karma'.format(
+                    name, rank, karma))
             if prizes.getPrize(karma) is not None:
                 sc.rtm_send_message(channel, prizes.getPrize(karma))
 
@@ -209,8 +211,9 @@ def handle_command(sc, text_list, channel):
         name = text_list[2]
         shame = dbopts.shame_ask(name)
         if shame:
-            sc.rtm_send_message(channel,
-                                tw.dedent('''
+            sc.rtm_send_message(
+                channel,
+                tw.dedent('''
                 I will forever remember that {} has {} points of shame.
                ''').format(name, shame))
         else:
@@ -275,14 +278,12 @@ def handle_command(sc, text_list, channel):
     # is also
     if len(text_list) > 3 and text_list[2] == 'is' and text_list[3] == 'also':
         if len(text_list) < 5:
-            sc.rtm_send_message(channel, "Surely {} isn't nothing!".format(
-                text_list[1]))
+            sc.rtm_send_message(
+                channel, "Surely {} isn't nothing!".format(text_list[1]))
         else:
             also = ' '.join(text_list[4:len(text_list)])
             dbopts.also_add(text_list[1], also)
             sc.rtm_send_message(channel, "I'll keep that in mind")
-
-
 
 
 def get_uid(sc, name):

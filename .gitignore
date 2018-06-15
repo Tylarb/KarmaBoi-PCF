@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 KarmaBoi/env_KarmaBoi/
 testing.out
+.vscode
