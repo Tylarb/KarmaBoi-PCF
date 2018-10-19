@@ -328,7 +328,7 @@ def shame_add(name):
         try:
             cursor.execute('''
                 UPDATE people SET shame = %s WHERE name = %s;
-                ''' (shame, name))
+                ''', (shame, name))
             db.commit()
             logger.debug('Inserted into karmadb {} shame for {}'.format(
                 shame, name))
